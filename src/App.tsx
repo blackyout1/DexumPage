@@ -1,0 +1,218 @@
+import React, { useState } from 'react';
+import { AuthProvider } from './context/AuthContext';
+import { Navbar } from './components/Navbar';
+import { HomeView } from './components/HomeView';
+import { StoreView } from './components/StoreView';
+import { ModulesView } from './components/ModulesView';
+import { ConfigsView } from './components/ConfigsView';
+import { ClientDashboardView } from './components/ClientDashboardView';
+import { AdminPanelView } from './components/AdminPanelView';
+import { FaqView } from './components/FaqView';
+import { PaymentCheckoutModal } from './components/PaymentCheckoutModal';
+import { AuthModal } from './components/AuthModal';
+import { ViewMode, SoftwareProduct } from './types';
+import { PRODUCTS } from './data/mockData';
+import { 
+  Swords, 
+  Send, 
+  MessageSquare, 
+  ExternalLink
+} from 'lucide-react';
+
+function AppContent() {
+  const [currentView, setCurrentView] = useState<ViewMode>('home');
+  const [selectedProductForBuy, setSelectedProductForBuy] = useState<SoftwareProduct | null>(null);
+  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
+
+  const handleOpenBuyModal = (productId?: string) => {
+    const prod = PRODUCTS.find(p => p.id === productId) || PRODUCTS[0];
+    setSelectedProductForBuy(prod);
+    setIsBuyModalOpen(true);
+  };
+
+  const handleOpenAuth = (tab: 'login' | 'register' = 'login') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+
+  const handlePaymentSuccess = (_key: string) => {
+    // Keep modal open so user can copy key or click to dashboard
+  };
+
+  return (
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col selection:bg-white selection:text-black font-sans antialiased delta-grid-bg">
+      
+      {/* Top Navbar */}
+      <Navbar
+        currentView={currentView}
+        onNavigate={setCurrentView}
+        onOpenAuth={handleOpenAuth}
+        onOpenBuyModal={handleOpenBuyModal}
+      />
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        {currentView === 'home' && (
+          <HomeView
+            onNavigate={setCurrentView}
+            onOpenBuyModal={handleOpenBuyModal}
+            onOpenAuth={handleOpenAuth}
+          />
+        )}
+
+        {currentView === 'store' && (
+          <StoreView onOpenBuyModal={handleOpenBuyModal} />
+        )}
+
+        {currentView === 'modules' && (
+          <ModulesView onOpenBuyModal={handleOpenBuyModal} />
+        )}
+
+        {currentView === 'configs' && (
+          <ConfigsView />
+        )}
+
+        {currentView === 'client_dashboard' && (
+          <ClientDashboardView
+            onOpenBuyModal={handleOpenBuyModal}
+            onOpenAuth={handleOpenAuth}
+          />
+        )}
+
+        {currentView === 'admin_panel' && (
+          <AdminPanelView />
+        )}
+
+        {currentView === 'faq' && (
+          <FaqView onOpenBuyModal={handleOpenBuyModal} />
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 bg-[#0c0c0f] mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            
+            {/* Col 1: Brand */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white">
+                  <Swords className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-bold text-base tracking-wider text-white">DEXUM CLIENT</span>
+              </div>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Приватный софт для Minecraft 1.21 с постоянными обновлениями и поддержкой всех популярных античитов.
+              </p>
+            </div>
+
+            {/* Col 2: Navigation Links */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Разделы</h4>
+              <ul className="space-y-1.5 text-xs text-zinc-400">
+                <li>
+                  <button onClick={() => setCurrentView('store')} className="hover:text-white transition-colors cursor-pointer">
+                    Каталог тарифов
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setCurrentView('modules')} className="hover:text-white transition-colors cursor-pointer">
+                    Все модули чита
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setCurrentView('configs')} className="hover:text-white transition-colors cursor-pointer">
+                    База конфигов (.CFG)
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setCurrentView('client_dashboard')} className="hover:text-white transition-colors cursor-pointer">
+                    Личный кабинет & HWID
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Supported Servers */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Обходы античитов</h4>
+              <div className="flex flex-wrap gap-1 text-[10px] font-mono text-zinc-300">
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">FunTime Matrix 7.4</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">GrimAC 2.3.8</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">ReallyWorld</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">HolyWorld</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Hypixel Watchdog</span>
+              </div>
+            </div>
+
+            {/* Col 4: Community & Support */}
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Связь и поддержка</h4>
+              <div className="flex flex-col gap-1.5">
+                <a
+                  href="https://t.me/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-[#141418] hover:bg-[#202026] border border-white/5 text-xs text-zinc-300 hover:text-white flex items-center justify-between transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Send className="w-3.5 h-3.5 text-zinc-400" />
+                    Telegram
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-zinc-500" />
+                </a>
+
+                <a
+                  href="https://discord.gg/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-[#141418] hover:bg-[#202026] border border-white/5 text-xs text-zinc-300 hover:text-white flex items-center justify-between transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
+                    Discord
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-zinc-500" />
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          <div className="pt-5 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-zinc-500">
+            <span>© 2026 Dexum Client. Все права защищены.</span>
+            <span>Minecraft является товарным знаком Mojang AB.</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* Checkout / Buy Modal */}
+      <PaymentCheckoutModal
+        product={selectedProductForBuy}
+        isOpen={isBuyModalOpen}
+        onClose={() => setIsBuyModalOpen(false)}
+        onSuccess={handlePaymentSuccess}
+      />
+
+      {/* Login & Register Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        initialTab={authModalTab}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+
+    </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+export default App;

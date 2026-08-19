@@ -1,0 +1,6 @@
+{
+  "name": "Dexum",
+  "description": "Официальный сайт приватного софта Dexum Client для Minecraft 1.21 с каталогом тарифов, модулей и личным кабинетом.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
