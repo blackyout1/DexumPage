@@ -75,7 +75,7 @@ export interface User {
   isBanned?: boolean;
 }
 
-export type PaymentMethod = 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance';
+export type PaymentMethod = 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance' | 'funpay';
 
 export interface Order {
   id: string;

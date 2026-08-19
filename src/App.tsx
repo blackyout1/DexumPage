@@ -16,7 +16,8 @@ import {
   Swords, 
   Send, 
   MessageSquare, 
-  ExternalLink
+  ExternalLink,
+  ShoppingBag
 } from 'lucide-react';
 
 function AppContent() {
@@ -139,18 +140,30 @@ function AppContent() {
             <div className="space-y-2">
               <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Обходы античитов</h4>
               <div className="flex flex-wrap gap-1 text-[10px] font-mono text-zinc-300">
-                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">FunTime Matrix 7.4</span>
                 <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">GrimAC 2.3.8</span>
-                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">ReallyWorld</span>
-                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">HolyWorld</span>
-                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Hypixel Watchdog</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Minecraft 1.21</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Grim Exploit</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Raycast Bypass</span>
               </div>
             </div>
 
             {/* Col 4: Community & Support */}
             <div className="space-y-2.5">
-              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Связь и поддержка</h4>
+              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Купить и Поддержка</h4>
               <div className="flex flex-col gap-1.5">
+                <a
+                  href="https://funpay.com/uk/users/11146533/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-amber-950/30 hover:bg-amber-950/50 border border-amber-500/20 text-xs text-amber-300 hover:text-white flex items-center justify-between transition-colors font-medium"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+                    Купить на FunPay
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-amber-400/70" />
+                </a>
+
                 <a
                   href="https://t.me/"
                   target="_blank"
@@ -159,7 +172,7 @@ function AppContent() {
                 >
                   <span className="flex items-center gap-1.5">
                     <Send className="w-3.5 h-3.5 text-zinc-400" />
-                    Telegram
+                    Telegram Канал
                   </span>
                   <ExternalLink className="w-3 h-3 text-zinc-500" />
                 </a>
@@ -172,7 +185,7 @@ function AppContent() {
                 >
                   <span className="flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
-                    Discord
+                    Discord Сервер
                   </span>
                   <ExternalLink className="w-3 h-3 text-zinc-500" />
                 </a>
