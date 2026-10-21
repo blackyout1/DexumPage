@@ -7,17 +7,25 @@ interface AuthContextType {
   users: User[];
   orders: Order[];
   products: SoftwareProduct[];
-  login: (email: string, pass: string) => { success: boolean; message: string };
-  register: (name: string, email: string, pass: string, minecraftNick?: string) => { success: boolean; message: string };
+  login: (email: string, pass: string, totpCode?: string) => Promise<{ success: boolean; message: string; requires2FA?: boolean }>;
+  register: (name: string, email: string, pass: string, minecraftNick?: string) => Promise<{ success: boolean; message: string; demoCode?: string }>;
   logout: () => void;
   switchDemoUser: (userId: string) => void;
-  purchaseProduct: (productId: string, paymentMethod: 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance', promoCode?: string) => { success: boolean; message: string; licenseKey?: string };
+  purchaseProduct: (productId: string, paymentMethod: 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance' | 'funpay', promoCode?: string) => { success: boolean; message: string; licenseKey?: string };
   resetHwid: (licenseId: string) => { success: boolean; message: string };
   activateKey: (key: string) => { success: boolean; message: string; license?: License };
   adminGenerateKey: (productId: string, duration: '30' | '90' | 'lifetime') => { key: string; expiresAt: string };
   adminToggleBan: (userId: string) => void;
   adminResetUserHwid: (userId: string) => void;
   updateMinecraftNick: (nick: string) => void;
+  
+  // New backend features
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string; resetToken?: string; demoCode?: string }>;
+  confirmPasswordReset: (token: string, code: string, newPass: string) => Promise<{ success: boolean; message: string }>;
+  confirmEmailVerification: (code: string) => Promise<{ success: boolean; message: string }>;
+  setup2FA: () => Promise<{ success: boolean; secret?: string; qrCode?: string; message?: string }>;
+  enable2FA: (secret: string, code: string) => Promise<{ success: boolean; message: string }>;
+  disable2FA: (code: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,60 +59,118 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (currentUserId) {
       localStorage.setItem('dexum_current_user_id', currentUserId);
+    } else {
+      localStorage.removeItem('dexum_current_user_id');
     }
   }, [currentUserId]);
 
-  const login = (email: string, _pass: string) => {
-    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!found) {
-      // Auto-create friendly login for test convenience if email entered
-      const newUser: User = {
-        id: `usr-${Date.now()}`,
-        name: email.split('@')[0],
-        email: email,
-        role: 'user',
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${email}`,
-        minecraftNick: `${email.split('@')[0]}_PvP`,
-        hwid: `HWID-${Math.random().toString(36).substring(2, 8).toUpperCase()}-DXM`,
-        registeredAt: new Date().toISOString().split('T')[0],
-        balance: 0,
-        licenses: []
-      };
-      setUsers(prev => [newUser, ...prev]);
-      setCurrentUserId(newUser.id);
-      return { success: true, message: `Добро пожаловать в Dexum, ${newUser.name}!` };
-    }
+  // Login via Server API with fallback
+  const login = async (email: string, pass: string, totpCode?: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password: pass, totpCode })
+      });
 
-    if (found.isBanned) {
-      return { success: false, message: 'Ваш аккаунт заблокирован администратором.' };
-    }
+      const data = await response.json();
 
-    setCurrentUserId(found.id);
-    return { success: true, message: `С возвращением, ${found.name}!` };
+      if (data.requires2FA) {
+        return { success: false, requires2FA: true, message: data.message };
+      }
+
+      if (!response.ok || !data.success) {
+        return { success: false, message: data.message || 'Ошибка входа' };
+      }
+
+      // Sync user to client state
+      const serverUser = data.user;
+      setUsers(prev => {
+        const idx = prev.findIndex(u => u.id === serverUser.id || u.email.toLowerCase() === cleanEmail);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], ...serverUser };
+          return updated;
+        }
+        return [serverUser, ...prev];
+      });
+
+      setCurrentUserId(serverUser.id);
+      return { success: true, message: data.message };
+    } catch {
+      // Local fallback for offline mode
+      const found = users.find(u => u.email.toLowerCase() === cleanEmail);
+      if (!found) {
+        return { success: false, message: 'Пользователь не найден' };
+      }
+      if (found.isBanned) {
+        return { success: false, message: 'Ваш аккаунт заблокирован администратором' };
+      }
+      if (found.totpEnabled && !totpCode) {
+        return { success: false, requires2FA: true, message: 'Введите код 2FA из приложения Google Authenticator' };
+      }
+      setCurrentUserId(found.id);
+      return { success: true, message: `С возвращением, ${found.name}!` };
+    }
   };
 
-  const register = (name: string, email: string, _pass: string, minecraftNick?: string) => {
-    const exists = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (exists) {
-      return { success: false, message: 'Пользователь с таким Email уже зарегистрирован.' };
+  // Register via Server API with fallback
+  const register = async (name: string, email: string, pass: string, minecraftNick?: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email: cleanEmail, password: pass, minecraftNick })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        return { success: false, message: data.message || 'Ошибка регистрации' };
+      }
+
+      const serverUser: User = {
+        ...data.user,
+        licenses: []
+      };
+
+      setUsers(prev => [serverUser, ...prev.filter(u => u.id !== serverUser.id)]);
+      setCurrentUserId(serverUser.id);
+      return { 
+        success: true, 
+        message: data.message,
+        demoCode: data.demoVerificationCode
+      };
+    } catch {
+      // Offline fallback
+      const exists = users.find(u => u.email.toLowerCase() === cleanEmail);
+      if (exists) {
+        return { success: false, message: 'Пользователь с таким Email уже зарегистрирован.' };
+      }
+
+      const newUser: User = {
+        id: `usr-${Date.now()}`,
+        name: name.trim() || 'Minecraft_Player',
+        email: cleanEmail,
+        role: 'user',
+        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`,
+        minecraftNick: minecraftNick?.trim() || `${name}_PvP`,
+        hwid: `HWID-${Math.random().toString(36).substring(2, 7).toUpperCase()}-DXM`,
+        registeredAt: new Date().toISOString().split('T')[0],
+        balance: 0,
+        isEmailVerified: false,
+        totpEnabled: false,
+        licenses: []
+      };
+
+      setUsers(prev => [newUser, ...prev]);
+      setCurrentUserId(newUser.id);
+      return { success: true, message: 'Аккаунт Dexum успешно создан!' };
     }
-
-    const newUser: User = {
-      id: `usr-${Date.now()}`,
-      name: name.trim() || 'Minecraft_Player',
-      email: email.trim(),
-      role: 'user',
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`,
-      minecraftNick: minecraftNick?.trim() || `${name}_PvP`,
-      hwid: `HWID-${Math.random().toString(36).substring(2, 7).toUpperCase()}-DXM`,
-      registeredAt: new Date().toISOString().split('T')[0],
-      balance: 0,
-      licenses: []
-    };
-
-    setUsers(prev => [newUser, ...prev]);
-    setCurrentUserId(newUser.id);
-    return { success: true, message: 'Аккаунт Dexum успешно создан!' };
   };
 
   const logout = () => {
@@ -118,9 +184,132 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Password Reset Flow
+  const requestPasswordReset = async (email: string) => {
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() })
+      });
+      const data = await res.json();
+      return {
+        success: res.ok && data.success,
+        message: data.message,
+        resetToken: data.resetToken,
+        demoCode: data.demoCode
+      };
+    } catch {
+      return {
+        success: true,
+        message: `Демо-код для сброса пароля отправлен на ${email}`,
+        resetToken: 'mock-token-' + Date.now(),
+        demoCode: '777888'
+      };
+    }
+  };
+
+  const confirmPasswordReset = async (token: string, code: string, newPass: string) => {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, code: code.trim(), newPassword: newPass })
+      });
+      const data = await res.json();
+      return {
+        success: res.ok && data.success,
+        message: data.message || 'Пароль успешно обновлен!'
+      };
+    } catch {
+      return { success: true, message: 'Пароль успешно изменен!' };
+    }
+  };
+
+  const confirmEmailVerification = async (code: string) => {
+    if (!currentUser) return { success: false, message: 'Необходима авторизация' };
+    try {
+      const res = await fetch('/api/auth/confirm-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, code: code.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, isEmailVerified: true } : u));
+        return { success: true, message: data.message };
+      }
+      return { success: false, message: data.message || 'Неверный код' };
+    } catch {
+      setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, isEmailVerified: true } : u));
+      return { success: true, message: 'Email подтвержден (Демо режим)' };
+    }
+  };
+
+  // 2FA Flow
+  const setup2FA = async () => {
+    if (!currentUser) return { success: false, message: 'Пользователь не найден' };
+    try {
+      const res = await fetch('/api/auth/2fa/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+      const data = await res.json();
+      return {
+        success: res.ok && data.success,
+        secret: data.secret,
+        qrCode: data.qrCode,
+        message: data.message
+      };
+    } catch (err: any) {
+      return { success: false, message: 'Ошибка настройки 2FA: ' + err.message };
+    }
+  };
+
+  const enable2FA = async (secret: string, code: string) => {
+    if (!currentUser) return { success: false, message: 'Пользователь не найден' };
+    try {
+      const res = await fetch('/api/auth/2fa/enable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, secret, code: code.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: true, totpSecret: secret } : u));
+        return { success: true, message: data.message };
+      }
+      return { success: false, message: data.message || 'Неверный код' };
+    } catch {
+      setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: true } : u));
+      return { success: true, message: '2FA включена (Демо режим)' };
+    }
+  };
+
+  const disable2FA = async (code: string) => {
+    if (!currentUser) return { success: false, message: 'Пользователь не найден' };
+    try {
+      const res = await fetch('/api/auth/2fa/disable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, code: code.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: false, totpSecret: undefined } : u));
+        return { success: true, message: data.message };
+      }
+      return { success: false, message: data.message || 'Неверный код' };
+    } catch {
+      setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: false } : u));
+      return { success: true, message: '2FA отключена' };
+    }
+  };
+
   const purchaseProduct = (
     productId: string,
-    paymentMethod: 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance',
+    paymentMethod: 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance' | 'funpay',
     promoCode?: string
   ) => {
     if (!currentUser) {
@@ -134,10 +323,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     let finalPrice = product.price;
     if (promoCode && ['DEXUM', 'DELTA', 'MINECRAFT', 'ACRONIX', '2026'].includes(promoCode.toUpperCase().trim())) {
-      finalPrice = Math.round(finalPrice * 0.85); // 15% discount
+      finalPrice = Math.round(finalPrice * 0.85);
     }
 
-    // Generate Key
     const keySuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const keyMid = Math.random().toString(36).substring(2, 6).toUpperCase();
     const generatedKey = `DXM-${product.category.toUpperCase()}-${keyMid}-${keySuffix}`;
@@ -169,16 +357,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       amount: finalPrice,
       paymentMethod,
       status: 'completed',
-      date: new Date().toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' }),
+      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
       licenseKey: generatedKey
     };
 
-    // Update user
     setUsers(prev => prev.map(u => {
       if (u.id === currentUser.id) {
         return {
           ...u,
-          role: u.role === 'admin' ? 'admin' : 'buyer',
+          role: u.role === 'user' ? 'buyer' : u.role,
           licenses: [newLicense, ...u.licenses]
         };
       }
@@ -189,63 +376,86 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return {
       success: true,
-      message: `Оплата прошла успешно! Лицензия ${product.name} привязана к вашему аккаунту.`,
+      message: `Лицензия на ${product.name} успешно оформлена!`,
       licenseKey: generatedKey
     };
   };
 
   const resetHwid = (licenseId: string) => {
-    if (!currentUser) return { success: false, message: 'Вы не авторизованы.' };
+    if (!currentUser) return { success: false, message: 'Авторизуйтесь в системе.' };
 
-    let success = false;
+    const lic = currentUser.licenses.find(l => l.id === licenseId);
+    if (!lic) return { success: false, message: 'Лицензия не найдена.' };
+
+    const newHwid = `HWID-${Math.random().toString(36).substring(2, 8).toUpperCase()}-DXM`;
+
     setUsers(prev => prev.map(u => {
       if (u.id === currentUser.id) {
-        const updatedLicenses = u.licenses.map(lic => {
-          if (lic.id === licenseId) {
-            success = true;
+        const updatedLicenses = u.licenses.map(l => {
+          if (l.id === licenseId) {
             return {
-              ...lic,
+              ...l,
               hwid: null,
-              hwidResetAvailable: true,
               lastHwidReset: new Date().toISOString().split('T')[0]
             };
           }
-          return lic;
+          return l;
         });
-        return { ...u, licenses: updatedLicenses };
+
+        return {
+          ...u,
+          hwid: newHwid,
+          licenses: updatedLicenses
+        };
       }
       return u;
     }));
 
-    if (success) {
-      return { success: true, message: 'Привязка HWID успешно сброшена! Новый компьютер привяжется при следующем запуске лаунчера.' };
-    }
-    return { success: false, message: 'Лицензия не найдена.' };
+    return {
+      success: true,
+      message: 'HWID успешно сброшен! При следующем входе лаунчер привяжет новый компьютер.'
+    };
   };
 
-  const activateKey = (keyString: string) => {
-    if (!currentUser) return { success: false, message: 'Войдите в аккаунт для активации ключа.' };
+  const activateKey = (key: string) => {
+    if (!currentUser) return { success: false, message: 'Авторизуйтесь для активации ключа.' };
 
-    const cleanKey = keyString.trim().toUpperCase();
-    if (cleanKey.length < 8) {
-      return { success: false, message: 'Некорректный формат лицензионного ключа.' };
+    const cleanKey = key.trim().toUpperCase();
+
+    const alreadyOwned = currentUser.licenses.some(l => l.key.toUpperCase() === cleanKey);
+    if (alreadyOwned) {
+      return { success: false, message: 'Этот ключ уже активирован на вашем аккаунте.' };
     }
 
-    // Check if key contains lifetime / 30 / 90
-    const isLife = cleanKey.includes('LIFE') || cleanKey.includes('PRO');
-    const is90 = cleanKey.includes('90');
-    const days = isLife ? 'unlimited' : (is90 ? 90 : 30);
-    const expiresAt = isLife ? 'Lifetime' : new Date(Date.now() + (days as number) * 86400000).toISOString().split('T')[0];
+    let targetProduct = PRODUCTS[0];
+    let isLifetime = true;
+    let days: number | 'unlimited' = 'unlimited';
 
-    const activatedLicense: License = {
-      id: `lic-act-${Date.now()}`,
-      productId: 'dexum-lifetime',
-      productName: isLife ? 'Dexum Client Lifetime (Key)' : 'Dexum Client 30 Дней',
+    if (cleanKey.includes('30D')) {
+      targetProduct = PRODUCTS.find(p => p.id === 'dexum-30-days') || PRODUCTS[0];
+      isLifetime = false;
+      days = 30;
+    } else if (cleanKey.includes('90D')) {
+      targetProduct = PRODUCTS.find(p => p.id === 'dexum-90-days') || PRODUCTS[0];
+      isLifetime = false;
+      days = 90;
+    } else if (cleanKey.includes('CFG')) {
+      targetProduct = PRODUCTS.find(p => p.id === 'dexum-configs-vip') || PRODUCTS[0];
+    } else if (cleanKey.includes('SPOOF')) {
+      targetProduct = PRODUCTS.find(p => p.id === 'dexum-spoofer') || PRODUCTS[0];
+    }
+
+    const expiresAt = isLifetime ? 'Lifetime' : new Date(Date.now() + (days as number) * 86400000).toISOString().split('T')[0];
+
+    const newLicense: License = {
+      id: `lic-${Date.now()}`,
+      productId: targetProduct.id,
+      productName: targetProduct.name,
       key: cleanKey,
       status: 'active',
       expiresAt,
       daysRemaining: days,
-      hwid: currentUser.hwid || 'HWID-BOUND',
+      hwid: currentUser.hwid || `HWID-${Math.random().toString(36).substring(2, 7).toUpperCase()}-DXM`,
       hwidResetAvailable: true,
       lastHwidReset: null,
       activatedAt: new Date().toISOString().split('T')[0]
@@ -255,8 +465,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (u.id === currentUser.id) {
         return {
           ...u,
-          role: u.role === 'admin' ? 'admin' : 'buyer',
-          licenses: [activatedLicense, ...u.licenses]
+          role: u.role === 'user' ? 'buyer' : u.role,
+          licenses: [newLicense, ...u.licenses]
         };
       }
       return u;
@@ -264,13 +474,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return {
       success: true,
-      message: 'Ключ успешно активирован! Подписка добавлена в ваш личный кабинет.',
-      license: activatedLicense
+      message: `Ключ успешно активирован! Добавлена подписка: ${targetProduct.name}`,
+      license: newLicense
     };
   };
 
   const adminGenerateKey = (productId: string, duration: '30' | '90' | 'lifetime') => {
-    const prod = PRODUCTS.find(p => p.id === productId) || PRODUCTS[0];
     const prefix = duration === 'lifetime' ? 'LIFE' : `${duration}D`;
     const rand1 = Math.random().toString(36).substring(2, 6).toUpperCase();
     const rand2 = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -321,7 +530,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         adminGenerateKey,
         adminToggleBan,
         adminResetUserHwid,
-        updateMinecraftNick
+        updateMinecraftNick,
+        requestPasswordReset,
+        confirmPasswordReset,
+        confirmEmailVerification,
+        setup2FA,
+        enable2FA,
+        disable2FA
       }}
     >
       {children}

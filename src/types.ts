@@ -67,12 +67,16 @@ export interface User {
   email: string;
   role: UserRole;
   avatar: string;
+  password?: string;
   minecraftNick?: string;
   hwid: string;
   registeredAt: string;
   balance: number;
   licenses: License[];
   isBanned?: boolean;
+  isEmailVerified?: boolean;
+  totpEnabled?: boolean;
+  totpSecret?: string;
 }
 
 export type PaymentMethod = 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance' | 'funpay';

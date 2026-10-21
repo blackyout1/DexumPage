@@ -28,7 +28,7 @@ export const PaymentCheckoutModal: React.FC<PaymentCheckoutModalProps> = ({
   onClose,
   onSuccess
 }) => {
-  const { currentUser, processPurchase } = useAuth();
+  const { currentUser, purchaseProduct } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('funpay');
   const [promoCode, setPromoCode] = useState('');
@@ -36,7 +36,6 @@ export const PaymentCheckoutModal: React.FC<PaymentCheckoutModalProps> = ({
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState('');
   const [emailInput, setEmailInput] = useState('');
-  const [funpayOrderId, setFunpayOrderId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [purchasedKey, setPurchasedKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -69,21 +68,24 @@ export const PaymentCheckoutModal: React.FC<PaymentCheckoutModalProps> = ({
     setErrorMessage('');
 
     if (paymentMethod === 'funpay') {
-      // Open FunPay profile in new tab
-      window.open(FUNPAY_PROFILE_URL, '_blank');
+      // 1. Open FunPay profile in new tab
+      try {
+        window.open(FUNPAY_PROFILE_URL, '_blank');
+      } catch (e) {
+        console.warn('Popup blocked:', e);
+      }
       
-      // Auto-issue activation key for client testing/instant flow
-      setTimeout(() => {
-        const generatedKey = processPurchase(
-          product.id,
-          'funpay',
-          finalPrice,
-          promoApplied ? promoCode : undefined
-        );
-        setPurchasedKey(generatedKey);
-        if (onSuccess) onSuccess(generatedKey);
-        setIsProcessing(false);
-      }, 700);
+      // 2. Issue key in user dashboard
+      const res = purchaseProduct(
+        product.id,
+        'funpay' as any,
+        promoApplied ? promoCode : undefined
+      );
+
+      const key = res.licenseKey || `DXM-FP-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      setPurchasedKey(key);
+      if (onSuccess) onSuccess(key);
+      setIsProcessing(false);
       return;
     }
 
@@ -114,24 +116,24 @@ export const PaymentCheckoutModal: React.FC<PaymentCheckoutModalProps> = ({
         window.open(data.redirectUrl, '_blank');
       }
 
-      const generatedKey = data.licenseKey || processPurchase(
+      const clientRes = purchaseProduct(
         product.id,
-        paymentMethod,
-        finalPrice,
+        paymentMethod as any,
         promoApplied ? promoCode : undefined
       );
+      const generatedKey = data.licenseKey || clientRes.licenseKey || `DXM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
       setPurchasedKey(generatedKey);
       if (onSuccess) onSuccess(generatedKey);
 
     } catch (err: any) {
-      console.warn('Backend payment fallback to client handler:', err.message);
-      const generatedKey = processPurchase(
+      console.warn('Backend payment fallback:', err.message);
+      const clientRes = purchaseProduct(
         product.id,
-        paymentMethod,
-        finalPrice,
+        paymentMethod as any,
         promoApplied ? promoCode : undefined
       );
+      const generatedKey = clientRes.licenseKey || `DXM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       setPurchasedKey(generatedKey);
       if (onSuccess) onSuccess(generatedKey);
     } finally {

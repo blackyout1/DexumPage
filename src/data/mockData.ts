@@ -321,11 +321,14 @@ export const INITIAL_USERS: User[] = [
     name: 'Alex Morozov (Admin)',
     email: 'admin@dexum.gg',
     role: 'admin',
+    password: 'adminpassword123',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     minecraftNick: 'DexumOwner',
     hwid: 'HWID-9F8A-22B1-8C09-E81D-DEXUM',
     registeredAt: '2025-01-10',
     balance: 15400,
+    isEmailVerified: true,
+    totpEnabled: false,
     licenses: [
       {
         id: 'lic-admin-1',
@@ -360,11 +363,14 @@ export const INITIAL_USERS: User[] = [
     name: 'xX_ShadowPvP_Xx',
     email: 'shadow.pvp@gmail.com',
     role: 'buyer',
+    password: 'password123',
     avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
     minecraftNick: 'Shadow_Demon77',
     hwid: 'HWID-41C8-99D0-55A1-18F2-CLIENT',
     registeredAt: '2026-02-14',
     balance: 500,
+    isEmailVerified: true,
+    totpEnabled: false,
     licenses: [
       {
         id: 'lic-buyer-1',
@@ -399,11 +405,14 @@ export const INITIAL_USERS: User[] = [
     name: 'Steve_Crafter',
     email: 'steve@mine.ru',
     role: 'user',
+    password: 'password123',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     minecraftNick: 'StevePvP2026',
     hwid: 'HWID-00A1-B33C-9112-NEWPC',
     registeredAt: '2026-03-01',
     balance: 0,
+    isEmailVerified: false,
+    totpEnabled: false,
     licenses: []
   }
 ];
