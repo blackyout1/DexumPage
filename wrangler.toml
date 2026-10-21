@@ -1,0 +1,11 @@
+name = "dexumpage-api"
+main = "worker.ts"
+compatibility_date = "2024-09-23"
+
+# Static site routing / Pages compatibility
+[site]
+bucket = "./dist"
+
+[vars]
+ENVIRONMENT = "production"
+APP_NAME = "Dexum Client 1.21"
