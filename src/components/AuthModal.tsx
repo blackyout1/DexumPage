@@ -31,7 +31,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [minecraftNick, setMinecraftNick] = useState('');
   
   // 2FA Prompt State during Login
   const [needs2FA, setNeeds2FA] = useState(false);
@@ -92,7 +91,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setErrorMsg(res.message);
         }
       } else if (activeTab === 'register') {
-        const res = await register(name, email, password, minecraftNick);
+        const res = await register(name, email, password);
         setIsSubmitting(false);
 
         if (res.success) {
@@ -385,34 +384,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {activeTab !== 'forgot_password' && !needs2FA && (
           <form onSubmit={handleSubmit} className="space-y-3">
             {activeTab === 'register' && (
-              <>
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    Логин / Никнейм:
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ваш логин"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    Ник в Minecraft (IGN):
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ник персонажа на сервере"
-                    value={minecraftNick}
-                    onChange={e => setMinecraftNick(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-                  />
-                </div>
-              </>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                  Логин:
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ваш логин"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                />
+              </div>
             )}
 
             <div>

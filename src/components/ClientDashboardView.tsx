@@ -46,8 +46,6 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({
   const [isActivating, setIsActivating] = useState(false);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [hwidToast, setHwidToast] = useState<string | null>(null);
-  const [isEditingNick, setIsEditingNick] = useState(false);
-  const [mcNick, setMcNick] = useState(currentUser?.minecraftNick || '');
 
   // 2FA Setup Dialog states
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
@@ -121,13 +119,6 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({
         setInputKey('');
       }
     }, 600);
-  };
-
-  const handleSaveNick = () => {
-    if (mcNick.trim()) {
-      updateMinecraftNick(mcNick.trim());
-    }
-    setIsEditingNick(false);
   };
 
   const handleDownloadLauncher = (filename: string) => {
@@ -262,32 +253,7 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({
               )}
             </div>
 
-            {/* Minecraft Nick Editor */}
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-zinc-400">Ник в игре:</span>
-              {isEditingNick ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={mcNick}
-                    onChange={e => setMcNick(e.target.value)}
-                    className="px-2 py-0.5 bg-[#18181c] border border-white/20 rounded text-xs text-white font-mono"
-                  />
-                  <button onClick={handleSaveNick} className="text-white hover:text-zinc-300 p-1 cursor-pointer">
-                    <Save className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-mono font-bold text-zinc-200">{currentUser.minecraftNick || 'Не указан'}</span>
-                  <button onClick={() => setIsEditingNick(true)} className="text-zinc-500 hover:text-zinc-300 p-0.5 cursor-pointer">
-                    <Edit2 className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
+            <p className="text-[11px] text-zinc-500 font-mono mt-1">
               HWID: <span className="text-zinc-400">{currentUser.hwid || 'Не привязан'}</span>
             </p>
           </div>
