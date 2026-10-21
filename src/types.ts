@@ -69,7 +69,7 @@ export interface User {
   avatar: string;
   password?: string;
   minecraftNick?: string;
-  hwid: string;
+  hwid?: string | null;
   registeredAt: string;
   balance: number;
   licenses: License[];

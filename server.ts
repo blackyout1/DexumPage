@@ -86,7 +86,7 @@ export interface ServerUser {
   role: 'admin' | 'buyer' | 'user';
   avatar: string;
   minecraftNick?: string;
-  hwid: string;
+  hwid?: string | null;
   registeredAt: string;
   balance: number;
   isBanned: boolean;
@@ -266,8 +266,6 @@ app.post('/api/auth/register', (req, res) => {
     }
 
     const userId = `usr-${Date.now()}`;
-    const cleanNick = minecraftNick ? String(minecraftNick).trim() : `${name}_PvP`;
-    const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase();
 
     const newUser: ServerUser = {
       id: userId,
@@ -276,8 +274,7 @@ app.post('/api/auth/register', (req, res) => {
       passwordHash: hashPassword(String(password)),
       role: 'user',
       avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`,
-      minecraftNick: cleanNick,
-      hwid: `HWID-${randomHex}-DXM`,
+      hwid: null as any,
       registeredAt: new Date().toISOString().split('T')[0],
       balance: 0,
       isBanned: false,

@@ -408,7 +408,7 @@ export const INITIAL_USERS: User[] = [
     password: 'password123',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     minecraftNick: 'StevePvP2026',
-    hwid: 'HWID-00A1-B33C-9112-NEWPC',
+    hwid: null,
     registeredAt: '2026-03-01',
     balance: 0,
     isEmailVerified: false,

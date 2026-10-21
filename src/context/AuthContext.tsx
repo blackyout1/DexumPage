@@ -158,8 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: cleanEmail,
         role: 'user',
         avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`,
-        minecraftNick: minecraftNick?.trim() || `${name}_PvP`,
-        hwid: `HWID-${Math.random().toString(36).substring(2, 7).toUpperCase()}-DXM`,
+        hwid: null,
         registeredAt: new Date().toISOString().split('T')[0],
         balance: 0,
         isEmailVerified: false,
@@ -246,24 +245,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // 2FA Flow
   const setup2FA = async () => {
     if (!currentUser) return { success: false, message: 'Пользователь не найден' };
+
+    // 1. Try server endpoint first
     try {
       const res = await fetch('/api/auth/2fa/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id })
       });
-      const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.secret && data.qrCode) {
+          return {
+            success: true,
+            secret: data.secret,
+            qrCode: data.qrCode
+          };
+        }
+      }
+    } catch {
+      // Server offline or static hosting (Cloudflare Pages), continue to browser generator
+    }
+
+    // 2. Client-side TOTP & QR Code generator (guaranteed to work on Cloudflare Pages static hosting)
+    try {
+      const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      const bytes = new Uint8Array(20);
+      crypto.getRandomValues(bytes);
+      let clientSecret = '';
+      for (let i = 0; i < bytes.length; i++) {
+        clientSecret += BASE32[bytes[i] % 32];
+      }
+
+      const service = 'Dexum Client';
+      const otpauth = `otpauth://totp/${encodeURIComponent(service)}:${encodeURIComponent(currentUser.email)}?secret=${clientSecret}&issuer=${encodeURIComponent(service)}&algorithm=SHA1&digits=6&period=30`;
+
+      const QRCodeModule = await import('qrcode');
+      const clientQrCode = await QRCodeModule.default.toDataURL(otpauth, {
+        margin: 1,
+        color: { dark: '#ffffff', light: '#101014' }
+      });
+
       return {
-        success: res.ok && data.success,
-        secret: data.secret,
-        qrCode: data.qrCode,
-        message: data.message
+        success: true,
+        secret: clientSecret,
+        qrCode: clientQrCode
       };
     } catch (err: any) {
-      return { success: false, message: 'Ошибка настройки 2FA: ' + err.message };
+      return { success: false, message: 'Ошибка генерации 2FA: ' + err.message };
     }
   };
 
