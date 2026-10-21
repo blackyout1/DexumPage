@@ -8,7 +8,9 @@ import {
   Check, 
   Copy, 
   Search,
-  DollarSign
+  DollarSign,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PRODUCTS } from '../data/mockData';
@@ -21,7 +23,9 @@ export const AdminPanelView: React.FC = () => {
     orders, 
     adminGenerateKey, 
     adminToggleBan, 
-    adminResetUserHwid 
+    adminResetUserHwid,
+    adminDeleteUser,
+    adminClearAllUsers
   } = useAuth();
 
   const [selectedProduct, setSelectedProduct] = useState<string>('dexum-lifetime');
@@ -233,19 +237,38 @@ export const AdminPanelView: React.FC = () => {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-zinc-400" />
               <h3 className="text-sm font-bold text-white">
-                Пользователи и HWID
+                Пользователи и HWID ({users.length})
               </h3>
             </div>
 
-            <div className="relative">
-              <Search className="w-3 h-3 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Поиск по нику / HWID..."
-                value={userSearch}
-                onChange={e => setUserSearch(e.target.value)}
-                className="pl-7 pr-3 py-1 bg-[#141418] border border-white/10 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-              />
+            <div className="flex items-center gap-2">
+              {/* Wipe All Registered Accounts Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const conf = window.confirm('ВНИМАНИЕ! Вы уверены, что хотите СТЕРЕТЬ ВСЕ зарегистрированные аккаунты? Останется только ваш профиль администратора.');
+                  if (conf) {
+                    adminClearAllUsers();
+                    alert('Все тестовые и зарегистрированные аккаунты успешно удалены!');
+                  }
+                }}
+                className="px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-500/30 text-rose-300 hover:text-white text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Очистить всю базу пользователей"
+              >
+                <Trash2 className="w-3 h-3 text-rose-400" />
+                Стереть все аккаунты
+              </button>
+
+              <div className="relative">
+                <Search className="w-3 h-3 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Поиск..."
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  className="pl-7 pr-3 py-1 bg-[#141418] border border-white/10 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                />
+              </div>
             </div>
           </div>
 
@@ -298,18 +321,33 @@ export const AdminPanelView: React.FC = () => {
                     </button>
 
                     {u.role !== 'admin' && (
-                      <button
-                        type="button"
-                        onClick={() => adminToggleBan(u.id)}
-                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                          u.isBanned
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'bg-rose-500/20 text-rose-300'
-                        }`}
-                        title={u.isBanned ? 'Разблокировать' : 'Заблокировать'}
-                      >
-                        <Ban className="w-3 h-3" />
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => adminToggleBan(u.id)}
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            u.isBanned
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : 'bg-rose-500/20 text-rose-300'
+                          }`}
+                          title={u.isBanned ? 'Разблокировать' : 'Заблокировать'}
+                        >
+                          <Ban className="w-3 h-3" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Удалить аккаунт "${u.name}" (${u.email})?`)) {
+                              adminDeleteUser(u.id);
+                            }
+                          }}
+                          className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900 border border-red-500/30 text-red-400 hover:text-white transition-colors cursor-pointer"
+                          title="Удалить аккаунт навсегда"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </>
                     )}
                   </div>
 

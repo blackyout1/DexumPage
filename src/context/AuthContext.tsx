@@ -19,6 +19,8 @@ interface AuthContextType {
   adminGenerateKey: (productId: string, duration: '30' | '90' | 'lifetime') => { key: string; expiresAt: string };
   adminToggleBan: (userId: string) => void;
   adminResetUserHwid: (userId: string) => void;
+  adminDeleteUser: (userId: string) => void;
+  adminClearAllUsers: () => void;
   updateMinecraftNick: (nick: string) => void;
   
   // Real security features
@@ -45,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [currentUserId, setCurrentUserId] = useState<string>(() => {
     const saved = localStorage.getItem('dexum_current_user_id');
-    return saved || 'usr-buyer';
+    return saved || '';
   });
 
   // Client storage for active email verification codes and password reset tokens
@@ -335,18 +337,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true, message: 'Почта успешно подтверждена!' };
   };
 
-  // 2FA Flow
+  // 2FA Flow (iOS Camera & Google Authenticator fully supported)
   const setup2FA = async () => {
     if (!currentUser) return { success: false, message: 'Пользователь не найден' };
 
     try {
-      const clientSecret = generateBase32Secret(20);
-      const service = 'Dexum Client';
-      const otpauth = `otpauth://totp/${encodeURIComponent(service)}:${encodeURIComponent(currentUser.email)}?secret=${clientSecret}&issuer=${encodeURIComponent(service)}&algorithm=SHA1&digits=6&period=30`;
+      const clientSecret = generateBase32Secret();
+      const accountName = currentUser.email.trim();
+      const issuer = 'Dexum';
+      
+      // Strict RFC 6238 URI format required by iOS Passwords & Google Authenticator
+      const otpauth = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}?secret=${clientSecret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 
+      // High-contrast clean black-on-white QR code with margin 3 for crisp camera scanning on iPhone/iPad
       const clientQrCode = await QRCode.toDataURL(otpauth, {
-        margin: 1,
-        color: { dark: '#ffffff', light: '#101014' }
+        errorCorrectionLevel: 'M',
+        margin: 3,
+        width: 256,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
       });
 
       return {
@@ -588,6 +599,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
+  const adminDeleteUser = (userId: string) => {
+    setUsers(prev => prev.filter(u => u.id !== userId));
+  };
+
+  const adminClearAllUsers = () => {
+    // Keep only the main admin account, wipe all registered/test users and cache
+    const adminUser = users.find(u => u.role === 'admin') || INITIAL_USERS[0];
+    const cleanAdmin = { ...adminUser, licenses: adminUser.licenses || [] };
+    setUsers([cleanAdmin]);
+    localStorage.removeItem('dexum_email_codes');
+    localStorage.removeItem('dexum_reset_codes');
+    localStorage.setItem('dexum_store_users', JSON.stringify([cleanAdmin]));
+    setCurrentUserId(cleanAdmin.id);
+  };
+
   const updateMinecraftNick = (nick: string) => {
     if (!currentUser) return;
     setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, minecraftNick: nick } : u));
@@ -610,6 +636,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         adminGenerateKey,
         adminToggleBan,
         adminResetUserHwid,
+        adminDeleteUser,
+        adminClearAllUsers,
         updateMinecraftNick,
         requestPasswordReset,
         confirmPasswordReset,

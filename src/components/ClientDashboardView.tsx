@@ -576,18 +576,34 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({
               {/* QR Code Container */}
               <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-[#0b0b0e] border border-white/10">
                 {qrCodeUrl ? (
-                  <img src={qrCodeUrl} alt="2FA QR Code" className="w-44 h-44 rounded-lg bg-white p-2" />
+                  <div className="p-3 bg-white rounded-xl shadow-lg flex items-center justify-center">
+                    <img src={qrCodeUrl} alt="2FA QR Code" className="w-48 h-48 block" />
+                  </div>
                 ) : (
-                  <div className="w-44 h-44 flex items-center justify-center text-zinc-500">
+                  <div className="w-48 h-48 flex items-center justify-center text-zinc-500">
                     <QrCode className="w-10 h-10 animate-pulse" />
                   </div>
                 )}
                 {totpSecret && (
-                  <div className="mt-3 text-center">
-                    <span className="text-[10px] text-zinc-500 block">Либо введите секретный ключ вручную:</span>
-                    <span className="font-mono text-xs font-bold text-zinc-200 select-all tracking-wider">
-                      {totpSecret}
+                  <div className="mt-3.5 w-full text-center">
+                    <span className="text-[11px] text-zinc-400 block mb-1">
+                      Либо добавьте в приложение вручную:
                     </span>
+                    <div className="flex items-center justify-center gap-2 p-2 bg-[#141418] border border-white/10 rounded-lg">
+                      <span className="font-mono text-xs font-bold text-amber-300 select-all tracking-wider">
+                        {totpSecret.match(/.{1,4}/g)?.join(' ') || totpSecret}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(totpSecret);
+                          alert('Секретный ключ скопирован: ' + totpSecret);
+                        }}
+                        className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white cursor-pointer"
+                      >
+                        Копировать
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

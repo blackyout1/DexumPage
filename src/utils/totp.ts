@@ -1,14 +1,16 @@
 // RFC 6238 TOTP Validation and Secret Generator (Google Authenticator)
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-export function generateBase32Secret(length = 20): string {
-  const bytes = new Uint8Array(length);
+// Standard 16-character (80-bit) Base32 secret for strict iOS/Google Authenticator compatibility
+export function generateBase32Secret(): string {
+  const bytes = new Uint8Array(10); // 10 bytes = exactly 16 base32 characters (16 * 5 bits = 80 bits)
   crypto.getRandomValues(bytes);
   let secret = '';
   for (let i = 0; i < bytes.length; i++) {
     secret += BASE32_ALPHABET[bytes[i] % 32];
+    secret += BASE32_ALPHABET[(bytes[i] >> 3) % 32];
   }
-  return secret;
+  return secret.slice(0, 16);
 }
 
 export function base32Decode(base32: string): Uint8Array {
@@ -63,11 +65,12 @@ export async function getTOTPToken(secret: string, timeStepWindow = 0): Promise<
 }
 
 export async function verifyTOTPToken(token: string, secret: string): Promise<boolean> {
-  const cleanToken = token.trim();
+  const cleanToken = token.trim().replace(/\s+/g, '');
   if (cleanToken.length !== 6 || !/^\d{6}$/.test(cleanToken)) {
     return false;
   }
-  for (let window = -1; window <= 1; window++) {
+  // Allow -2 to +2 windows (up to 60 seconds time drift on mobile phones)
+  for (let window = -2; window <= 2; window++) {
     const expected = await getTOTPToken(secret, window);
     if (expected === cleanToken) {
       return true;

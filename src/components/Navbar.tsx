@@ -225,33 +225,35 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                       </div>
 
-                      {/* Demo Quick Account Switch */}
-                      <div className="py-2">
-                        <div className="px-3 py-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                          Переключить аккаунт (тест):
+                      {/* Admin Quick Account Switch */}
+                      {isAdmin && (
+                        <div className="py-2 border-b border-white/5">
+                          <div className="px-3 py-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                            Быстрый выбор профиля (Админ):
+                          </div>
+                          <div className="space-y-1 mt-1">
+                            {users.map(u => (
+                              <button
+                                key={u.id}
+                                onClick={() => {
+                                  switchDemoUser(u.id);
+                                  setIsDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                                  u.id === currentUser.id
+                                    ? 'bg-white/15 text-white font-bold'
+                                    : 'text-zinc-400 hover:bg-white/5 hover:text-white'
+                                }`}
+                              >
+                                <span className="truncate">{u.name}</span>
+                                <span className="text-[10px] font-mono">
+                                  {u.role === 'admin' ? '👑 Admin' : u.licenses.length > 0 ? '💎 Lifetime' : '🎮 User'}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="space-y-1 mt-1">
-                          {users.map(u => (
-                            <button
-                              key={u.id}
-                              onClick={() => {
-                                switchDemoUser(u.id);
-                                setIsDropdownOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                                u.id === currentUser.id
-                                  ? 'bg-white/15 text-white font-bold'
-                                  : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-                              }`}
-                            >
-                              <span className="truncate">{u.name}</span>
-                              <span className="text-[10px] font-mono">
-                                {u.role === 'admin' ? '👑 Admin' : u.licenses.length > 0 ? '💎 Lifetime' : '🎮 User'}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      )}
 
                       {/* Action Links */}
                       <div className="pt-2 border-t border-white/5 flex flex-col gap-1">
