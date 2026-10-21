@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, SoftwareProduct, Order, License } from '../types';
 import { INITIAL_USERS, PRODUCTS, INITIAL_ORDERS } from '../data/mockData';
+import { generateBase32Secret, verifyTOTPToken } from '../utils/totp';
+import QRCode from 'qrcode';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -8,7 +10,7 @@ interface AuthContextType {
   orders: Order[];
   products: SoftwareProduct[];
   login: (email: string, pass: string, totpCode?: string) => Promise<{ success: boolean; message: string; requires2FA?: boolean }>;
-  register: (name: string, email: string, pass: string, minecraftNick?: string) => Promise<{ success: boolean; message: string; demoCode?: string }>;
+  register: (name: string, email: string, pass: string) => Promise<{ success: boolean; message: string; demoCode?: string }>;
   logout: () => void;
   switchDemoUser: (userId: string) => void;
   purchaseProduct: (productId: string, paymentMethod: 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance' | 'funpay', promoCode?: string) => { success: boolean; message: string; licenseKey?: string };
@@ -19,7 +21,7 @@ interface AuthContextType {
   adminResetUserHwid: (userId: string) => void;
   updateMinecraftNick: (nick: string) => void;
   
-  // New backend features
+  // Real security features
   requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string; resetToken?: string; demoCode?: string }>;
   confirmPasswordReset: (token: string, code: string, newPass: string) => Promise<{ success: boolean; message: string }>;
   confirmEmailVerification: (code: string) => Promise<{ success: boolean; message: string }>;
@@ -46,6 +48,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved || 'usr-buyer';
   });
 
+  // Client storage for active email verification codes and password reset tokens
+  const [emailCodes, setEmailCodes] = useState<Record<string, { code: string; expiresAt: number }>>(() => {
+    const saved = localStorage.getItem('dexum_email_codes');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const [resetCodes, setResetCodes] = useState<Record<string, { userId: string; code: string; expiresAt: number }>>(() => {
+    const saved = localStorage.getItem('dexum_reset_codes');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const currentUser = users.find(u => u.id === currentUserId) || null;
 
   useEffect(() => {
@@ -57,6 +70,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [orders]);
 
   useEffect(() => {
+    localStorage.setItem('dexum_email_codes', JSON.stringify(emailCodes));
+  }, [emailCodes]);
+
+  useEffect(() => {
+    localStorage.setItem('dexum_reset_codes', JSON.stringify(resetCodes));
+  }, [resetCodes]);
+
+  useEffect(() => {
     if (currentUserId) {
       localStorage.setItem('dexum_current_user_id', currentUserId);
     } else {
@@ -64,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [currentUserId]);
 
-  // Login via Server API with fallback
+  // LOGIN: Strict password check + REAL 2FA code check
   const login = async (email: string, pass: string, totpCode?: string) => {
     const cleanEmail = email.trim().toLowerCase();
     
@@ -75,101 +96,147 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email: cleanEmail, password: pass, totpCode })
       });
 
-      const data = await response.json();
-
-      if (data.requires2FA) {
-        return { success: false, requires2FA: true, message: data.message };
-      }
-
-      if (!response.ok || !data.success) {
-        return { success: false, message: data.message || 'Ошибка входа' };
-      }
-
-      // Sync user to client state
-      const serverUser = data.user;
-      setUsers(prev => {
-        const idx = prev.findIndex(u => u.id === serverUser.id || u.email.toLowerCase() === cleanEmail);
-        if (idx !== -1) {
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], ...serverUser };
-          return updated;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.requires2FA) {
+          return { success: false, requires2FA: true, message: data.message };
         }
-        return [serverUser, ...prev];
-      });
-
-      setCurrentUserId(serverUser.id);
-      return { success: true, message: data.message };
+        if (data.success && data.user) {
+          const serverUser = data.user;
+          setUsers(prev => {
+            const idx = prev.findIndex(u => u.id === serverUser.id || u.email.toLowerCase() === cleanEmail);
+            if (idx !== -1) {
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], ...serverUser };
+              return updated;
+            }
+            return [serverUser, ...prev];
+          });
+          setCurrentUserId(serverUser.id);
+          return { success: true, message: data.message };
+        }
+      }
     } catch {
-      // Local fallback for offline mode
-      const found = users.find(u => u.email.toLowerCase() === cleanEmail);
-      if (!found) {
-        return { success: false, message: 'Пользователь не найден' };
-      }
-      if (found.isBanned) {
-        return { success: false, message: 'Ваш аккаунт заблокирован администратором' };
-      }
-      if (found.totpEnabled && !totpCode) {
-        return { success: false, requires2FA: true, message: 'Введите код 2FA из приложения Google Authenticator' };
-      }
-      setCurrentUserId(found.id);
-      return { success: true, message: `С возвращением, ${found.name}!` };
+      // Cloudflare Pages static route
     }
+
+    // Client Strict Auth Check
+    const found = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (!found) {
+      return { success: false, message: 'Пользователь с таким Email не найден.' };
+    }
+
+    if (found.isBanned) {
+      return { success: false, message: 'Ваш аккаунт заблокирован администратором.' };
+    }
+
+    // Verify Password
+    if (found.password && found.password !== pass) {
+      return { success: false, message: 'Неверный пароль. Проверьте правильность ввода.' };
+    }
+
+    // Real Google Authenticator Check
+    if (found.totpEnabled && found.totpSecret) {
+      if (!totpCode) {
+        return { success: false, requires2FA: true, message: 'Требуется ввод 6-значного кода из Google Authenticator' };
+      }
+
+      const isValid = await verifyTOTPToken(totpCode, found.totpSecret);
+      if (!isValid) {
+        return { success: false, requires2FA: true, message: 'Неверный 6-значный код 2FA! Введите актуальный код из приложения Google Authenticator.' };
+      }
+    }
+
+    setCurrentUserId(found.id);
+    return { success: true, message: `С возвращением, ${found.name}!` };
   };
 
-  // Register via Server API with fallback
-  const register = async (name: string, email: string, pass: string, minecraftNick?: string) => {
+  // REGISTER: Strict unique email check
+  const register = async (name: string, email: string, pass: string) => {
     const cleanEmail = email.trim().toLowerCase();
-    
+    const cleanName = name.trim();
+
+    if (!cleanName || !cleanEmail || !pass) {
+      return { success: false, message: 'Заполните все обязательные поля.' };
+    }
+
+    if (pass.length < 6) {
+      return { success: false, message: 'Пароль должен быть не менее 6 символов.' };
+    }
+
+    // Check duplicate in client state immediately
+    const existing = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (existing) {
+      return { success: false, message: 'Пользователь с таким Email уже зарегистрирован! Войдите в аккаунт.' };
+    }
+
+    // Try server registration if worker/server is active
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email: cleanEmail, password: pass, minecraftNick })
+        body: JSON.stringify({ name: cleanName, email: cleanEmail, password: pass })
       });
 
       const data = await response.json();
-
       if (!response.ok || !data.success) {
         return { success: false, message: data.message || 'Ошибка регистрации' };
       }
 
       const serverUser: User = {
         ...data.user,
+        hwid: null,
         licenses: []
       };
 
-      setUsers(prev => [serverUser, ...prev.filter(u => u.id !== serverUser.id)]);
+      setUsers(prev => [serverUser, ...prev.filter(u => u.email.toLowerCase() !== cleanEmail)]);
       setCurrentUserId(serverUser.id);
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: data.message,
         demoCode: data.demoVerificationCode
       };
     } catch {
-      // Offline fallback
-      const exists = users.find(u => u.email.toLowerCase() === cleanEmail);
-      if (exists) {
-        return { success: false, message: 'Пользователь с таким Email уже зарегистрирован.' };
-      }
-
-      const newUser: User = {
-        id: `usr-${Date.now()}`,
-        name: name.trim() || 'Minecraft_Player',
-        email: cleanEmail,
-        role: 'user',
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`,
-        hwid: null,
-        registeredAt: new Date().toISOString().split('T')[0],
-        balance: 0,
-        isEmailVerified: false,
-        totpEnabled: false,
-        licenses: []
-      };
-
-      setUsers(prev => [newUser, ...prev]);
-      setCurrentUserId(newUser.id);
-      return { success: true, message: 'Аккаунт Dexum успешно создан!' };
+      // Offline/Cloudflare Pages register flow
     }
+
+    // Re-check duplicate strictly
+    if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
+      return { success: false, message: 'Пользователь с таким Email уже зарегистрирован!' };
+    }
+
+    const userId = `usr-${Date.now()}`;
+    const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const newUser: User = {
+      id: userId,
+      name: cleanName,
+      email: cleanEmail,
+      password: pass,
+      role: 'user',
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cleanName)}`,
+      hwid: null, // Strictly null until first game launch!
+      registeredAt: new Date().toISOString().split('T')[0],
+      balance: 0,
+      isEmailVerified: false,
+      totpEnabled: false,
+      licenses: []
+    };
+
+    // Save verification code
+    setEmailCodes(prev => ({
+      ...prev,
+      [userId]: { code: verifyCode, expiresAt: Date.now() + 15 * 60 * 1000 }
+    }));
+
+    setUsers(prev => [newUser, ...prev]);
+    setCurrentUserId(newUser.id);
+
+    return { 
+      success: true, 
+      message: 'Аккаунт успешно создан!',
+      demoCode: verifyCode
+    };
   };
 
   const logout = () => {
@@ -183,107 +250,101 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Password Reset Flow
+  // PASSWORD RESET: Strict code check
   const requestPasswordReset = async (email: string) => {
-    try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() })
-      });
-      const data = await res.json();
-      return {
-        success: res.ok && data.success,
-        message: data.message,
-        resetToken: data.resetToken,
-        demoCode: data.demoCode
-      };
-    } catch {
-      return {
-        success: true,
-        message: `Демо-код для сброса пароля отправлен на ${email}`,
-        resetToken: 'mock-token-' + Date.now(),
-        demoCode: '777888'
-      };
+    const cleanEmail = email.trim().toLowerCase();
+    const user = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (!user) {
+      return { success: false, message: 'Аккаунт с таким Email не найден.' };
     }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const token = 'rst-' + Math.random().toString(36).substring(2) + Date.now();
+
+    setResetCodes(prev => ({
+      ...prev,
+      [token]: { userId: user.id, code, expiresAt: Date.now() + 15 * 60 * 1000 }
+    }));
+
+    return {
+      success: true,
+      message: `Код подтверждения сгенерирован для ${cleanEmail}`,
+      resetToken: token,
+      demoCode: code
+    };
   };
 
   const confirmPasswordReset = async (token: string, code: string, newPass: string) => {
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, code: code.trim(), newPassword: newPass })
-      });
-      const data = await res.json();
-      return {
-        success: res.ok && data.success,
-        message: data.message || 'Пароль успешно обновлен!'
-      };
-    } catch {
-      return { success: true, message: 'Пароль успешно изменен!' };
+    const session = resetCodes[token];
+    if (!session) {
+      return { success: false, message: 'Сессия сброса устарела. Запросите код заново.' };
     }
+
+    if (Date.now() > session.expiresAt) {
+      return { success: false, message: 'Срок действия кода истек (15 минут).' };
+    }
+
+    // STRICT CODE CHECK
+    if (session.code !== code.trim()) {
+      return { success: false, message: 'Неверный код подтверждения! Проверьте 6 цифр.' };
+    }
+
+    if (newPass.length < 6) {
+      return { success: false, message: 'Новый пароль должен содержать от 6 символов.' };
+    }
+
+    // Update user password
+    setUsers(prev => prev.map(u => {
+      if (u.id === session.userId) {
+        return { ...u, password: newPass, isEmailVerified: true };
+      }
+      return u;
+    }));
+
+    // Invalidate reset code
+    setResetCodes(prev => {
+      const copy = { ...prev };
+      delete copy[token];
+      return copy;
+    });
+
+    return { success: true, message: 'Пароль успешно изменен! Войдите с новым паролем.' };
   };
 
+  // EMAIL VERIFICATION: Strict code check
   const confirmEmailVerification = async (code: string) => {
     if (!currentUser) return { success: false, message: 'Необходима авторизация' };
-    try {
-      const res = await fetch('/api/auth/confirm-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, code: code.trim() })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, isEmailVerified: true } : u));
-        return { success: true, message: data.message };
-      }
-      return { success: false, message: data.message || 'Неверный код' };
-    } catch {
-      setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, isEmailVerified: true } : u));
-      return { success: true, message: 'Email подтвержден (Демо режим)' };
+
+    const cleanCode = code.trim();
+    const session = emailCodes[currentUser.id];
+
+    if (!session) {
+      return { success: false, message: 'Код подтверждения не найден. Запросите новый.' };
     }
+
+    if (Date.now() > session.expiresAt) {
+      return { success: false, message: 'Срок действия кода истек.' };
+    }
+
+    // STRICT CODE VALIDATION: Never accept random code!
+    if (session.code !== cleanCode) {
+      return { success: false, message: 'Неверный код подтверждения!' };
+    }
+
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, isEmailVerified: true } : u));
+    return { success: true, message: 'Почта успешно подтверждена!' };
   };
 
+  // 2FA Flow
   const setup2FA = async () => {
     if (!currentUser) return { success: false, message: 'Пользователь не найден' };
 
-    // 1. Try server endpoint first
     try {
-      const res = await fetch('/api/auth/2fa/setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.secret && data.qrCode) {
-          return {
-            success: true,
-            secret: data.secret,
-            qrCode: data.qrCode
-          };
-        }
-      }
-    } catch {
-      // Server offline or static hosting (Cloudflare Pages), continue to browser generator
-    }
-
-    // 2. Client-side TOTP & QR Code generator (guaranteed to work on Cloudflare Pages static hosting)
-    try {
-      const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-      const bytes = new Uint8Array(20);
-      crypto.getRandomValues(bytes);
-      let clientSecret = '';
-      for (let i = 0; i < bytes.length; i++) {
-        clientSecret += BASE32[bytes[i] % 32];
-      }
-
+      const clientSecret = generateBase32Secret(20);
       const service = 'Dexum Client';
       const otpauth = `otpauth://totp/${encodeURIComponent(service)}:${encodeURIComponent(currentUser.email)}?secret=${clientSecret}&issuer=${encodeURIComponent(service)}&algorithm=SHA1&digits=6&period=30`;
 
-      const QRCodeModule = await import('qrcode');
-      const clientQrCode = await QRCodeModule.default.toDataURL(otpauth, {
+      const clientQrCode = await QRCode.toDataURL(otpauth, {
         margin: 1,
         color: { dark: '#ffffff', light: '#101014' }
       });
@@ -298,44 +359,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // STRICT 2FA ENABLE: Validate with real RFC6238 TOTP algorithm!
   const enable2FA = async (secret: string, code: string) => {
     if (!currentUser) return { success: false, message: 'Пользователь не найден' };
-    try {
-      const res = await fetch('/api/auth/2fa/enable', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, secret, code: code.trim() })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: true, totpSecret: secret } : u));
-        return { success: true, message: data.message };
-      }
-      return { success: false, message: data.message || 'Неверный код' };
-    } catch {
-      setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: true } : u));
-      return { success: true, message: '2FA включена (Демо режим)' };
+
+    const isValid = await verifyTOTPToken(code.trim(), secret.trim());
+    if (!isValid) {
+      return { 
+        success: false, 
+        message: 'Неверный 6-значный код! Введите точный код из приложения Google Authenticator на телефоне.' 
+      };
     }
+
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: true, totpSecret: secret } : u));
+    return { success: true, message: 'Google Authenticator успешно подключен!' };
   };
 
   const disable2FA = async (code: string) => {
     if (!currentUser) return { success: false, message: 'Пользователь не найден' };
-    try {
-      const res = await fetch('/api/auth/2fa/disable', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, code: code.trim() })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: false, totpSecret: undefined } : u));
-        return { success: true, message: data.message };
+
+    if (currentUser.totpEnabled && currentUser.totpSecret) {
+      const isValid = await verifyTOTPToken(code.trim(), currentUser.totpSecret);
+      if (!isValid) {
+        return { success: false, message: 'Неверный 6-значный код из Google Authenticator для отключения!' };
       }
-      return { success: false, message: data.message || 'Неверный код' };
-    } catch {
-      setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: false } : u));
-      return { success: true, message: '2FA отключена' };
     }
+
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: false, totpSecret: undefined } : u));
+    return { success: true, message: 'Двухфакторная защита 2FA отключена.' };
   };
 
   const purchaseProduct = (
@@ -373,7 +424,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'active',
       expiresAt: expiresAt,
       daysRemaining: daysRemaining,
-      hwid: currentUser.hwid || `HWID-${Math.random().toString(36).substring(2, 7).toUpperCase()}-DXM`,
+      hwid: currentUser.hwid || null,
       hwidResetAvailable: true,
       lastHwidReset: null,
       activatedAt: new Date().toISOString().split('T')[0]
@@ -418,8 +469,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const lic = currentUser.licenses.find(l => l.id === licenseId);
     if (!lic) return { success: false, message: 'Лицензия не найдена.' };
 
-    const newHwid = `HWID-${Math.random().toString(36).substring(2, 8).toUpperCase()}-DXM`;
-
     setUsers(prev => prev.map(u => {
       if (u.id === currentUser.id) {
         const updatedLicenses = u.licenses.map(l => {
@@ -435,7 +484,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         return {
           ...u,
-          hwid: newHwid,
+          hwid: null,
           licenses: updatedLicenses
         };
       }
@@ -444,7 +493,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return {
       success: true,
-      message: 'HWID успешно сброшен! При следующем входе лаунчер привяжет новый компьютер.'
+      message: 'HWID успешно сброшен! Теперь вы можете запустить лаунчер на новом компьютере.'
     };
   };
 
@@ -486,7 +535,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'active',
       expiresAt,
       daysRemaining: days,
-      hwid: currentUser.hwid || `HWID-${Math.random().toString(36).substring(2, 7).toUpperCase()}-DXM`,
+      hwid: currentUser.hwid || null,
       hwidResetAvailable: true,
       lastHwidReset: null,
       activatedAt: new Date().toISOString().split('T')[0]
