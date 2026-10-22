@@ -11,7 +11,7 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: 'Навсегда (Lifetime)',
     popular: true,
     featured: true,
-    supportedVersions: ['26.2']
+    supportedVersions: ['26.2'],
     supportedServers: ['Fabric 26.2'],
     features: [
       'Все 28 модулей: Combat, Movement, Render, Player, World',
