@@ -11,8 +11,8 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: 'Навсегда (Lifetime)',
     popular: true,
     featured: true,
-    supportedVersions: ['26.2'],
-    supportedServers: ['Fabric 26.2'],
+    supportedVersions: ['1.21'],
+    supportedServers: ['Fabric 1.21.x'],
     features: [
       'Все 28 модулей: Combat, Movement, Render, Player, World',
       'Бессрочный доступ и все будущие обновления',
@@ -25,7 +25,7 @@ export const PRODUCTS: SoftwareProduct[] = [
     ],
     badge: 'ХИТ',
     downloadSize: '—',
-    version: 'Fabric 26.2'
+    version: 'Fabric 1.21.x'
   },
   {
     id: 'dexum-90-days',
@@ -37,18 +37,18 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: '3 Месяца (90 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['26.2'],
-    supportedServers: ['Fabric 26.2'],
+    supportedVersions: ['1.21'],
+    supportedServers: ['Fabric 1.21.x'],
     features: [
       'Все 28 модулей клиента',
       'ClickGui и все HUD-элементы',
       'Система конфигов и команд',
-      'Friend-система',
+      'Friend-система с ESP и HUD',
       'Обновления в течение срока'
     ],
     badge: 'ВЫГОДНО',
     downloadSize: '—',
-    version: 'Fabric 26.2'
+    version: 'Fabric 1.21.x'
   },
   {
     id: 'dexum-30-days',
@@ -59,27 +59,26 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: '1 Месяц (30 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['26.2'],
-    supportedServers: ['Fabric 26.2'],
+    supportedVersions: ['1.21'],
+    supportedServers: ['Fabric 1.21.x'],
     features: [
       'Все 28 модулей клиента',
       'ClickGui и базовые HUD-элементы',
-      'Система конфигов',
+      'Система конфигов и команд',
       'Обновления в течение срока'
     ],
     downloadSize: '—',
-    version: 'Fabric 26.2'
+    version: 'Fabric 1.21.x'
   }
 ];
 
 export const MODULES: SoftwareModule[] = [
-  // ── Combat ────────────────────────────────────────────────────────
   {
     id: 'aura',
     name: 'Aura',
     category: 'Combat',
-    description: 'Автоматическая атака цели с silent-ротацией, приоритетом выбора цели (прицел/дистанция/HP), крит-чеком и дистанцией до 6 блоков.',
-    bypasses: ['Vanilla Packet'],
+    description: 'Автоматическая атака цели с silent-ротацией, приоритетом выбора цели (прицел/дистанция/HP) и дистанцией до 6 блоков.',
+    bypasses: ['Client-side'],
     hotkey: 'R',
     iconName: 'Swords',
     isPopular: true
@@ -88,8 +87,8 @@ export const MODULES: SoftwareModule[] = [
     id: 'triggerbot',
     name: 'TriggerBot',
     category: 'Combat',
-    description: 'Автоматический удар, когда прицел наведён на цель. Поддерживает крит-режим и рандомизацию задержки.',
-    bypasses: ['Vanilla Raycast'],
+    description: 'Автоматический удар, когда прицел наведён на цель. Крит-режим и рандомизация задержки.',
+    bypasses: ['Client-side'],
     hotkey: 'X',
     iconName: 'Crosshair'
   },
@@ -97,8 +96,8 @@ export const MODULES: SoftwareModule[] = [
     id: 'aimassist',
     name: 'AimAssist',
     category: 'Combat',
-    description: 'Плавное притяжение прицела к цели при движении мыши. GCD-квантизация, FOV, настраиваемая сила.',
-    bypasses: ['GCD Quantization'],
+    description: 'Плавное притяжение прицела к цели при движении мыши. FOV и настраиваемая сила.',
+    bypasses: ['Client-side'],
     iconName: 'Compass'
   },
   {
@@ -109,22 +108,20 @@ export const MODULES: SoftwareModule[] = [
     bypasses: ['Client-side'],
     iconName: 'Shield'
   },
-
-  // ── Movement ──────────────────────────────────────────────────────
   {
     id: 'sprint',
     name: 'Sprint',
     category: 'Movement',
     description: 'Автоматическое удержание спринта при движении с проверкой голода и эффектов.',
-    bypasses: ['Vanilla Input'],
+    bypasses: ['Client-side'],
     iconName: 'FastForward'
   },
   {
     id: 'noslow',
     name: 'NoSlow',
     category: 'Movement',
-    description: 'Убирает замедление при использовании предметов (еда, щит, лук). Режим Vanilla.',
-    bypasses: ['Vanilla Only'],
+    description: 'Убирает замедление при использовании предметов (еда, щит, лук).',
+    bypasses: ['Client-side'],
     iconName: 'Footprints'
   },
   {
@@ -140,7 +137,7 @@ export const MODULES: SoftwareModule[] = [
     name: 'AutoSneak',
     category: 'Movement',
     description: 'Приседание у края блоков при движении — защита от случайного падения.',
-    bypasses: ['Vanilla Input'],
+    bypasses: ['Client-side'],
     iconName: 'Footprints'
   },
   {
@@ -148,11 +145,9 @@ export const MODULES: SoftwareModule[] = [
     name: 'NoFall',
     category: 'Movement',
     description: 'Отмена урона от падения. Режимы Vanilla и Packet.',
-    bypasses: ['Vanilla Only'],
+    bypasses: ['Client-side'],
     iconName: 'Shield'
   },
-
-  // ── Render ────────────────────────────────────────────────────────
   {
     id: 'clickgui',
     name: 'ClickGui',
@@ -166,7 +161,7 @@ export const MODULES: SoftwareModule[] = [
     id: 'watermark',
     name: 'Watermark',
     category: 'Render',
-    description: 'HUD с ником, FPS и временем. Перетаскивается мышью, сохраняет позицию в конфиг.',
+    description: 'HUD с ником, FPS и временем. Перетаскивается мышью, сохраняет позицию.',
     bypasses: ['HUD'],
     iconName: 'Eye'
   },
@@ -183,7 +178,7 @@ export const MODULES: SoftwareModule[] = [
     id: 'friendesp',
     name: 'FriendESP',
     category: 'Render',
-    description: 'Подсветка друзей рамкой и линией через стены (2D-проекция).',
+    description: 'Подсветка друзей рамкой и линией через стены.',
     bypasses: ['Client-side'],
     iconName: 'Eye'
   },
@@ -208,7 +203,7 @@ export const MODULES: SoftwareModule[] = [
     name: 'FreeCam',
     category: 'Render',
     description: 'Свободная камера без движения тела. Спуф позиции, выход при уроне.',
-    bypasses: ['Vanilla Packet'],
+    bypasses: ['Client-side'],
     iconName: 'Eye'
   },
   {
@@ -260,14 +255,12 @@ export const MODULES: SoftwareModule[] = [
     bypasses: ['Client-side'],
     iconName: 'Eye'
   },
-
-  // ── Player ────────────────────────────────────────────────────────
   {
     id: 'nodelay',
     name: 'NoDelay',
     category: 'Player',
     description: 'Убирает задержку прыжка, ломания блоков и правого клика.',
-    bypasses: ['Vanilla Delay'],
+    bypasses: ['Client-side'],
     iconName: 'Zap'
   },
   {
@@ -282,8 +275,8 @@ export const MODULES: SoftwareModule[] = [
     id: 'cheststealer',
     name: 'ChestStealer',
     category: 'Player',
-    description: 'Автоматическое обчищение сундуков с рандомизированной задержкой и случайным порядком.',
-    bypasses: ['Vanilla Packet'],
+    description: 'Автоматическое обчищение сундуков с рандомизированной задержкой.',
+    bypasses: ['Client-side'],
     iconName: 'Package',
     isPopular: true
   },
@@ -292,7 +285,7 @@ export const MODULES: SoftwareModule[] = [
     name: 'AutoRespawn',
     category: 'Player',
     description: 'Автоматическое возрождение после смерти с настраиваемой задержкой.',
-    bypasses: ['Vanilla Packet'],
+    bypasses: ['Client-side'],
     iconName: 'HeartHandshake'
   },
   {
@@ -303,8 +296,6 @@ export const MODULES: SoftwareModule[] = [
     bypasses: ['HUD'],
     iconName: 'Eye'
   },
-
-  // ── World ─────────────────────────────────────────────────────────
   {
     id: 'timechanger',
     name: 'TimeChanger',
@@ -319,46 +310,42 @@ export const CLOUD_CONFIGS: CloudConfig[] = [
   {
     id: 'cfg-default-hvh',
     name: 'default_hvh.cfg',
-    server: 'Any',
+    server: 'HvH',
     playstyle: 'Rage / HvH',
     author: 'Dexum',
     downloads: 0,
     rating: 5,
     lastUpdated: 'Стартовый',
-    modulesCount: 12,
-    description: 'Базовый HvH-пресет: Aura, TriggerBot, NoSlow, Sprint, NoFall, NoPush. Скачайте и положите в dexum/configs/, затем .config load default_hvh'
+    modulesCount: 8,
+    description: 'Базовый HvH-пресет: Aura, TriggerBot, NoSlow, Sprint, NoFall, NoPush, Nametags, NoHurtCam.'
   },
   {
     id: 'cfg-default-legit',
     name: 'default_legit.cfg',
-    server: 'Any',
+    server: 'Legit',
     playstyle: 'Legit / Closet',
     author: 'Dexum',
     downloads: 0,
     rating: 5,
     lastUpdated: 'Стартовый',
-    modulesCount: 8,
-    description: 'Легитный пресет: AimAssist, TriggerBot (только криты), Nametags, NoHurtCam. Минимальный визуальный шум.'
+    modulesCount: 6,
+    description: 'Легитный пресет: AimAssist, TriggerBot (только криты), Nametags, NoHurtCam, AntiBlind, NoBob.'
   },
   {
     id: 'cfg-pvp-full',
     name: 'pvp_full.cfg',
-    server: 'Any',
+    server: 'Semi-Rage',
     playstyle: 'Semi-Rage',
     author: 'Dexum',
     downloads: 0,
     rating: 5,
     lastUpdated: 'Стартовый',
-    modulesCount: 20,
+    modulesCount: 14,
     description: 'Максимальный набор для PvP: все combat-модули + визуал + утилиты (ChestStealer, NoDelay, NoInteract).'
   }
 ];
 
-// ОСТАЛЬНОЕ ОСТАВЛЯЕМ КАК ЕСТЬ (INITIAL_USERS, INITIAL_ORDERS — это тестовые данные)
-// Но INITIAL_USERS хардкодит admin/password — это уйдёт после подключения бэкенда.
-
 export const INITIAL_USERS: User[] = [
-<<<<<<< HEAD
   {
     id: 'usr-admin',
     name: 'Alex Morozov (Admin)',
@@ -376,21 +363,8 @@ export const INITIAL_USERS: User[] = [
       {
         id: 'lic-admin-1',
         productId: 'dexum-lifetime',
-        productName: 'Dexum Client Lifetime (1.21)',
+        productName: 'Dexum Client Lifetime',
         key: 'DXM-LIFE-ADMIN-9999-DEV',
-        status: 'active',
-        expiresAt: 'Lifetime',
-        daysRemaining: 'unlimited',
-        hwid: 'HWID-9F8A-22B1-8C09-E81D-DEXUM',
-        hwidResetAvailable: true,
-        lastHwidReset: null,
-        activatedAt: '2025-01-10'
-      },
-      {
-        id: 'lic-admin-2',
-        productId: 'dexum-spoofer',
-        productName: 'Dexum HWID Spoofer',
-        key: 'SPOOF-LIFE-ADM-777',
         status: 'active',
         expiresAt: 'Lifetime',
         daysRemaining: 'unlimited',
@@ -418,7 +392,7 @@ export const INITIAL_USERS: User[] = [
       {
         id: 'lic-buyer-1',
         productId: 'dexum-lifetime',
-        productName: 'Dexum Client Lifetime (1.21)',
+        productName: 'Dexum Client Lifetime',
         key: 'DXM-LIFE-8821-9940-PVPGOD',
         status: 'active',
         expiresAt: 'Lifetime',
@@ -426,19 +400,6 @@ export const INITIAL_USERS: User[] = [
         hwid: 'HWID-41C8-99D0-55A1-18F2-CLIENT',
         hwidResetAvailable: true,
         lastHwidReset: '2026-02-15',
-        activatedAt: '2026-02-14'
-      },
-      {
-        id: 'lic-buyer-2',
-        productId: 'dexum-configs-vip',
-        productName: 'VIP Cloud Config Pack (1.21)',
-        key: 'CFG-PACK-VIP-3391',
-        status: 'active',
-        expiresAt: 'Lifetime',
-        daysRemaining: 'unlimited',
-        hwid: 'HWID-41C8-99D0-55A1-18F2-CLIENT',
-        hwidResetAvailable: true,
-        lastHwidReset: null,
         activatedAt: '2026-02-14'
       }
     ]
@@ -458,29 +419,39 @@ export const INITIAL_USERS: User[] = [
     totpEnabled: false,
     licenses: []
   }
-=======
-  // ... оставить существующий код, но перед релизом УДАЛИТЬ и заменить на реальных из БД
->>>>>>> 362b3dc (Initial commit: Dexum Client site)
 ];
 
-export const INITIAL_ORDERS: Order[] = [];
+export const INITIAL_ORDERS: Order[] = [
+  {
+    id: 'ord-901',
+    userId: 'usr-buyer',
+    userName: 'xX_ShadowPvP_Xx',
+    productId: 'dexum-lifetime',
+    productName: 'Dexum Client Lifetime',
+    amount: 1990,
+    paymentMethod: 'funpay',
+    status: 'completed',
+    date: '2026-02-14 18:42',
+    licenseKey: 'DXM-LIFE-8821-9940-PVPGOD'
+  }
+];
 
 export const FAQ_ITEMS = [
   {
     question: 'Какие версии Minecraft поддерживаются?',
-    answer: 'Клиент работает на Fabric Loader для Minecraft 26.2. NeoForge и другие лоадеры не поддерживаются.'
+    answer: 'Клиент работает на Fabric Loader для Minecraft 1.21.x. NeoForge и другие лоадеры не поддерживаются.'
   },
   {
     question: 'Как установить клиент?',
-    answer: 'Установите Fabric Loader для 26.2, скачайте jar-файл клиента из личного кабинета и положите его в папку mods. При первом запуске клиент создаст папку dexum/ в директории игры (рядом с папкой mods).'
+    answer: 'Установите Fabric Loader для 1.21.x, скачайте jar-файл клиента из личного кабинета и положите его в папку mods. При первом запуске клиент создаст папку dexum/ в директории игры.'
   },
   {
     question: 'Что умеет клиент?',
-    answer: 'Клиент включает модули для боя (Aura, TriggerBot, AimAssist, NoFriendDamage), движения (Sprint, NoSlow, NoPush, AutoSneak, NoFall), рендера (ClickGui, Nametags, FriendESP/HUD/Arrow, FreeCam, Zoom, NoBob, NoFov, AntiBlind, NoHurtCam, FullBright, Watermark) и игрока (NoDelay, NoInteract, ChestStealer, AutoRespawn, StreamerMode, TimeChanger). Полный список — в разделе «Функции».'
+    answer: 'Клиент включает 28 модулей: бой (Aura, TriggerBot, AimAssist, NoFriendDamage), движение (Sprint, NoSlow, NoPush, AutoSneak, NoFall), рендер (ClickGui, Nametags, FriendESP/HUD/Arrow, FreeCam, Zoom, NoBob, NoFov, AntiBlind, NoHurtCam, FullBright, Watermark), игрок (NoDelay, NoInteract, ChestStealer, AutoRespawn, StreamerMode) и мир (TimeChanger). Полный список — в разделе «Функции».'
   },
   {
     question: 'Как работает привязка HWID?',
-    answer: 'При первом запуске клиент привязывается к железу вашего ПК. Если вы переустановили Windows или сменили комплектующие — сбросьте HWID в личном кабинете на сайте (доступно 1 раз в 30 дней).'
+    answer: 'При первом запуске клиент привязывается к железу вашего ПК. Если вы переустановили Windows или сменили комплектующие — сбросьте HWID в личном кабинете на сайте.'
   },
   {
     question: 'Какие способы оплаты принимаются?',
