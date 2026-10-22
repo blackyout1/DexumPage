@@ -24,26 +24,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="space-y-16 pb-16">
       
-      {/* 1. HERO SECTION (CLEAN & HONEST) */}
+      {/* 1. HERO SECTION */}
       <section className="relative pt-12 pb-8 text-center max-w-4xl mx-auto space-y-6">
         
-        {/* Version Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#141418] border border-white/10 text-zinc-300 text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-zinc-400 animate-pulse" />
-          DEXUM CLIENT v4.4.2 • MINECRAFT 1.21
+          DEXUM CLIENT • FABRIC 1.21.x
         </div>
 
-        {/* Main Title */}
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-          Приватный софт Dexum для Minecraft 1.21
+          Приватный мод Dexum для Minecraft 1.21
         </h1>
 
-        {/* Subtitle */}
         <p className="text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-          Специализированные обходы под античит <strong className="text-zinc-200">GrimAC (2.3.8)</strong> для серверов 1.21. Плавная KillAura 360°, TargetStrafe, NoSlow, Velocity и готовые облачные конфиги.
+          Aura, TriggerBot, AimAssist, NoSlow, NoFall, ClickGui с drag &amp; drop панелями,
+          система конфигов и команд, Friend-система с ESP и HUD. Fabric 1.21.x.
         </p>
 
-        {/* CTA Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <button
             id="hero-buy-lifetime-btn"
@@ -61,7 +58,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             className="px-5 py-3.5 rounded-xl font-semibold text-sm bg-[#18181b] border border-white/10 text-zinc-300 hover:text-white hover:bg-[#27272a] transition-all flex items-center gap-2 cursor-pointer"
           >
             <Swords className="w-4 h-4 text-zinc-300" />
-            Список функций (60+)
+            Список модулей (28)
           </button>
 
           <button
@@ -75,30 +72,30 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       </section>
 
-      {/* 2. SUPPORTED SERVERS & ANTICHEAT */}
+      {/* 2. СОВМЕСТИМОСТЬ */}
       <section className="p-6 rounded-2xl bg-[#111114] border border-white/10">
         <div className="text-center mb-5">
           <h2 className="text-base font-bold text-white">
-            Поддерживаемые сервера и защита
+            Совместимость
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Оптимизировано под серверный античит GrimAC на версии Minecraft 1.21
+            Работает как клиентский мод — сервер не видит разницы
           </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
           {[
-            { name: 'GrimAC 2.3.8', status: 'Полный обход', sub: 'NoSlow / Strafe / Aura' },
-            { name: 'SunRise (1.21)', status: 'Поддерживается', sub: 'GrimAC режим' },
-            { name: 'SpamPvP (1.21)', status: 'Поддерживается', sub: 'Дуэли и PvP' },
-            { name: 'NexusGrief (1.21)', status: 'Поддерживается', sub: 'Анархия с GrimAC' }
-          ].map((srv, idx) => (
+            { name: 'Minecraft 1.21.x', status: 'Поддерживается', sub: 'Fabric Loader' },
+            { name: 'Vanilla Servers', status: 'Совместимо', sub: 'Любые сервера' },
+            { name: 'Fabric Servers', status: 'Совместимо', sub: 'С модами' },
+            { name: 'Windows 10 / 11', status: 'Поддерживается', sub: 'x64' }
+          ].map((item, idx) => (
             <div key={idx} className="p-3 rounded-xl bg-[#0b0b0e] border border-white/5 text-center">
-              <h4 className="font-bold text-white text-xs">{srv.name}</h4>
+              <h4 className="font-bold text-white text-xs">{item.name}</h4>
               <div className="text-[11px] font-mono text-zinc-300 mt-1">
-                {srv.status}
+                {item.status}
               </div>
-              <p className="text-[10px] text-zinc-500 mt-0.5">{srv.sub}</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">{item.sub}</p>
             </div>
           ))}
         </div>
@@ -108,15 +105,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <section id="pricing-section" className="space-y-6">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <h2 className="text-3xl font-extrabold text-white">
-            Тарифные планы Dexum
+            Тарифы Dexum
           </h2>
           <p className="text-xs text-zinc-400">
-            Моментальная выдача ключа сразу после подтверждения платежа.
+            Один клиент, три срока. Моментальная выдача ключа после оплаты.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-          {PRODUCTS.slice(0, 3).map((prod) => {
+          {PRODUCTS.map((prod) => {
             const isLifetime = prod.id === 'dexum-lifetime';
 
             return (
@@ -142,7 +139,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     {prod.tagline}
                   </p>
 
-                  {/* Price */}
                   <div className="my-4 pb-4 border-b border-white/5">
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold text-white font-mono">
@@ -159,7 +155,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Features */}
                   <ul className="space-y-2 mb-6 text-xs text-zinc-300">
                     {prod.features.map((feat, idx) => (
                       <li key={idx} className="flex items-start gap-2">
@@ -170,7 +165,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </ul>
                 </div>
 
-                {/* Buy Button */}
                 <button
                   type="button"
                   id={`buy-plan-${prod.id}`}
@@ -190,15 +184,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* 4. MODULES SUMMARY */}
+      {/* 4. МОДУЛИ */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white">
-              Популярные модули чита
+              Модули клиента
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Более 60 тонко настраиваемых функций
+              {MODULES.length} модулей в 5 категориях
             </p>
           </div>
           <button
@@ -245,7 +239,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* 5. WHY DEXUM CLIENT */}
+      {/* 5. WHY DEXUM */}
       <section className="p-6 sm:p-8 rounded-2xl bg-[#111114] border border-white/10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
@@ -253,10 +247,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <Zap className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-white">
-              Быстрый сброс HWID
+              ClickGui на Right Shift
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Сменили ПК или переустановили Windows? Сбросьте привязку в Личном кабинете без ожидания ответов поддержки.
+              Панели по категориям, поиск модулей, drag &amp; drop. Позиции сохраняются между сессиями.
             </p>
           </div>
 
@@ -265,10 +259,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <Download className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-white">
-              Облачные конфиги (.CFG)
+              Система конфигов
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Готовые настроенные профили под GrimAC 1.21. Загружайте и применяйте в один клик.
+              Автосохранение при выходе, ручные профили через <code className="text-zinc-200">.config save</code>.
+              Файлы в папке <code className="text-zinc-200">dexum/configs/</code>.
             </p>
           </div>
 
@@ -277,10 +272,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <RefreshCw className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-white">
-              Регулярные обновления
+              Команды и бинды
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Своевременная адаптация функционала чита и обходов под новые патчи античита GrimAC на версии 1.21.
+              Управление через чат: <code className="text-zinc-200">.bind</code>,{' '}
+              <code className="text-zinc-200">.toggle</code>,{' '}
+              <code className="text-zinc-200">.friend</code>. Автодополнение в чате.
             </p>
           </div>
         </div>

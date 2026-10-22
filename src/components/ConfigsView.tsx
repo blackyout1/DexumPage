@@ -13,7 +13,7 @@ export const ConfigsView: React.FC = () => {
   const [selectedServer, setSelectedServer] = useState<string>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const servers = ['All', 'FunTime', 'ReallyWorld', 'HolyWorld', 'Hypixel'];
+  const servers = ['All', 'HvH', 'Legit', 'Semi-Rage'];
 
   const filteredConfigs = CLOUD_CONFIGS.filter(cfg => {
     const matchesServer = selectedServer === 'All' || cfg.server === selectedServer;
@@ -27,20 +27,21 @@ export const ConfigsView: React.FC = () => {
   const handleDownloadConfig = (cfg: CloudConfig) => {
     setDownloadingId(cfg.id);
 
-    // Generate downloadable json config file
     const configData = {
-      client: "Dexum Client v4.4.2",
+      client: "Dexum Client",
       name: cfg.name,
       server: cfg.server,
       playstyle: cfg.playstyle,
       author: cfg.author,
       timestamp: new Date().toISOString(),
       modules: {
-        KillAura: { enabled: true, range: 3.6, cps: 16, raytrace: true },
-        AutoTotem: { enabled: true, delayMs: 0, swapMode: "Inventory" },
-        Velocity: { enabled: true, horizontal: 0, vertical: 100, mode: "GrimAC" },
-        TargetStrafe: { enabled: true, distance: 2.2, speed: 0.28 },
-        ESP: { enabled: true, box3D: true, chams: true, healthBar: true }
+        Aura: { enabled: true, distance: 6.0, critsOnly: true, smartSprint: false },
+        TriggerBot: { enabled: true, onlyCriticalHit: true },
+        NoSlow: { enabled: true, mode: 'Vanilla' },
+        Sprint: { enabled: true },
+        NoFall: { enabled: true, mode: 'Vanilla' },
+        NoPush: { enabled: true, players: true, water: true },
+        Nametags: { enabled: true, showHealth: true, showPing: true }
       }
     };
 
@@ -61,22 +62,22 @@ export const ConfigsView: React.FC = () => {
   return (
     <div className="space-y-8 pb-16">
       
-      {/* Header */}
       <div className="p-8 rounded-2xl bg-[#111114] border border-white/10 text-center space-y-3">
         <h1 className="text-3xl font-extrabold text-white">
-          Облачные конфиги (.CFG)
+          Примеры конфигов (.CFG)
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
-          Готовые конфигурации под популярные сервера. Скачивайте и загружайте в папку чита.
+          Стартовые пресеты. Скачайте .cfg и положите в{' '}
+          <code className="text-zinc-200">dexum/configs/</code>, затем{' '}
+          <code className="text-zinc-200">.config load &lt;name&gt;</code>
         </p>
 
-        {/* Search */}
         <div className="max-w-md mx-auto pt-1">
           <div className="relative">
             <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Поиск по названию или серверу..."
+              placeholder="Поиск по названию или стилю..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/30"
@@ -85,7 +86,6 @@ export const ConfigsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Server Filter Pills */}
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         {servers.map((srv) => (
           <button
@@ -97,12 +97,11 @@ export const ConfigsView: React.FC = () => {
                 : 'bg-[#141418] border border-white/10 text-zinc-400 hover:text-white'
             }`}
           >
-            {srv === 'All' ? 'Все сервера' : srv}
+            {srv === 'All' ? 'Все стили' : srv}
           </button>
         ))}
       </div>
 
-      {/* Configs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredConfigs.map((cfg) => {
           const isDownloading = downloadingId === cfg.id;
@@ -131,24 +130,22 @@ export const ConfigsView: React.FC = () => {
                   {cfg.description}
                 </p>
 
-                {/* Key Settings info */}
                 <div className="p-2.5 rounded-xl bg-[#0b0b0e] border border-white/5 space-y-1 text-[11px] font-mono text-zinc-400 mb-4">
                   <div className="flex justify-between">
-                    <span>Сервер:</span>
-                    <span className="text-zinc-200">{cfg.server}</span>
+                    <span>Стиль:</span>
+                    <span className="text-zinc-200">{cfg.playstyle}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Модулей:</span>
                     <span className="text-zinc-200">{cfg.modulesCount} шт.</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Стиль игры:</span>
-                    <span className="text-zinc-200 font-semibold">{cfg.playstyle}</span>
+                    <span>Обновлено:</span>
+                    <span className="text-zinc-200">{cfg.lastUpdated}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Download Footer */}
               <div className="pt-3 border-t border-white/5 flex items-center justify-between">
                 <span className="text-[10px] text-zinc-500 font-mono">
                   Автор: <strong className="text-zinc-400">{cfg.author}</strong>

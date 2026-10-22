@@ -1,6 +1,6 @@
 {
   "name": "Dexum",
-  "description": "Официальный сайт приватного софта Dexum Client для Minecraft 1.21 с каталогом тарифов, модулей и личным кабинетом.",
+  "description": "Приватный мод Dexum Client для Minecraft 26.2 на Fabric Loader: 28 модулей, ClickGui, система конфигов и команд.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

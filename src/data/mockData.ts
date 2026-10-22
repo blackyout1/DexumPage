@@ -4,318 +4,361 @@ export const PRODUCTS: SoftwareProduct[] = [
   {
     id: 'dexum-lifetime',
     name: 'Dexum Client Lifetime',
-    tagline: 'Максимальный доступ навсегда со всеми будущими обновлениями под Minecraft 1.21',
+    tagline: 'Полный доступ ко всем функциям клиента навсегда',
     category: 'client',
     price: 1990,
     originalPrice: 2990,
     durationLabel: 'Навсегда (Lifetime)',
     popular: true,
     featured: true,
-    supportedVersions: ['1.21'],
-    supportedServers: ['GrimAC Servers', 'SunRise', 'SpamPvP', 'NexusGrief'],
+    supportedVersions: ['26.2'],
+    supportedServers: ['Fabric 26.2'],
     features: [
-      'Все модули Rage / Legit / Anarchy',
-      'Бессрочный доступ и автообновления 1.21',
-      'Специализированные обходы под GrimAC 2.3.8',
-      'Облачные конфиги и приватный Discord',
-      'Приоритетный сброс HWID',
-      'Встроенный HWID Spoofer',
-      'Кастомный HUD, ClickGUI и TargetHUD',
-      'Поддержка Fabric 1.21 и NeoForge 1.21'
+      'Все 28 модулей: Combat, Movement, Render, Player, World',
+      'Бессрочный доступ и все будущие обновления',
+      'ClickGui с drag & drop панелями и поиском',
+      'Система конфигов с автосохранением',
+      'Команды: .help, .bind, .toggle, .friend, .config',
+      'Friend-система с ESP, HUD и стрелками',
+      'Custom HUD: Watermark, FriendHUD, Nametags',
+      'Приоритетная поддержка в Discord'
     ],
-    badge: 'ХИТ ПРОДАЖ',
-    downloadSize: '42.8 MB',
-    version: 'v4.4.2 (1.21)'
+    badge: 'ХИТ',
+    downloadSize: '—',
+    version: 'Fabric 26.2'
   },
   {
     id: 'dexum-90-days',
     name: 'Dexum Client 90 Дней',
-    tagline: 'Идеальный баланс для активного игрового сезона и клановых варов на 1.21',
+    tagline: 'Полный функционал клиента на 3 месяца',
     category: 'client',
     price: 990,
     originalPrice: 1390,
     durationLabel: '3 Месяца (90 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['1.21'],
-    supportedServers: ['GrimAC Servers', 'SunRise', 'SpamPvP'],
+    supportedVersions: ['26.2'],
+    supportedServers: ['Fabric 26.2'],
     features: [
-      'Полный функционал клиента под 1.21',
-      'Оптимизация под античит GrimAC',
-      'Доступ к базе облачных конфигов',
-      'Техподдержка в Telegram',
-      'Возможность продления со скидкой 20%'
+      'Все 28 модулей клиента',
+      'ClickGui и все HUD-элементы',
+      'Система конфигов и команд',
+      'Friend-система',
+      'Обновления в течение срока'
     ],
     badge: 'ВЫГОДНО',
-    downloadSize: '42.8 MB',
-    version: 'v4.4.2 (1.21)'
+    downloadSize: '—',
+    version: 'Fabric 26.2'
   },
   {
     id: 'dexum-30-days',
     name: 'Dexum Client 30 Дней',
-    tagline: 'Быстрый старт для теста всех топовых функций на серверах с GrimAC 1.21',
+    tagline: 'Попробовать полный функционал на месяц',
     category: 'client',
     price: 490,
     durationLabel: '1 Месяц (30 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['1.21'],
-    supportedServers: ['GrimAC Servers', 'SunRise'],
+    supportedVersions: ['26.2'],
+    supportedServers: ['Fabric 26.2'],
     features: [
-      'Все боевые и визуальные модули 1.21',
-      'Обход античита GrimAC 2.3.8',
-      'Базовый сброс HWID',
-      'Автообновление лаунчера'
+      'Все 28 модулей клиента',
+      'ClickGui и базовые HUD-элементы',
+      'Система конфигов',
+      'Обновления в течение срока'
     ],
-    downloadSize: '42.8 MB',
-    version: 'v4.4.2 (1.21)'
-  },
-  {
-    id: 'dexum-configs-vip',
-    name: 'VIP Cloud Config Pack (1.21)',
-    tagline: 'Коллекция настроенных CFG от топ-дуэлянтов под GrimAC на 1.21',
-    category: 'configs',
-    price: 290,
-    originalPrice: 450,
-    durationLabel: 'Вечный доступ к паку',
-    popular: false,
-    featured: false,
-    supportedVersions: ['1.21'],
-    supportedServers: ['GrimAC Servers', 'SunRise', 'SpamPvP'],
-    features: [
-      '45+ готовых конфигов 1.21 (HvH, Legit, Anarchy)',
-      'Кастомные шрифты и темы оформления GUI',
-      'Авто-подгрузка в игре через кнопку Cloud',
-      'Обновления под новые фиксы GrimAC'
-    ],
-    badge: 'CFG PACK',
-    downloadSize: '8.4 MB',
-    version: 'v2.8 (1.21)'
-  },
-  {
-    id: 'dexum-spoofer',
-    name: 'Dexum HWID Spoofer',
-    tagline: 'Обход блокировок по железу на лаунчерах и серверах 1.21',
-    category: 'spoofer',
-    price: 390,
-    originalPrice: 600,
-    durationLabel: 'Lifetime Лицензия',
-    popular: false,
-    featured: false,
-    supportedVersions: ['1.21'],
-    supportedServers: ['Все сервера и лаунчеры 1.21'],
-    features: [
-      'Спуфинг MAC, HDD/SSD Serial, GPU ID, BIOS GUID',
-      'Очистка логов Minecraft 1.21 и Windows',
-      'Запуск в 1 клик перед игрой',
-      'Безопасно для ОС'
-    ],
-    badge: 'SPOOFER',
-    downloadSize: '12.1 MB',
-    version: 'v3.1 Pro'
+    downloadSize: '—',
+    version: 'Fabric 26.2'
   }
 ];
 
 export const MODULES: SoftwareModule[] = [
+  // ── Combat ────────────────────────────────────────────────────────
   {
-    id: 'killaura',
-    name: 'KillAura (Aura 360°)',
+    id: 'aura',
+    name: 'Aura',
     category: 'Combat',
-    description: 'Автоматическая атака целей с настраиваемым радиусом, ротациями под GrimAC, кастомным CPS и авто-выбором лучшего оружия.',
-    bypasses: ['GrimAC 2.3.8', 'Raycast Legit', 'Vanilla Packet'],
+    description: 'Автоматическая атака цели с silent-ротацией, приоритетом выбора цели (прицел/дистанция/HP), крит-чеком и дистанцией до 6 блоков.',
+    bypasses: ['Vanilla Packet'],
     hotkey: 'R',
     iconName: 'Swords',
     isPopular: true
   },
   {
-    id: 'targetstrafe',
-    name: 'TargetStrafe',
-    category: 'Combat',
-    description: 'Плавное кружение вокруг цели с динамической дистанцией, уклонением от стрел и расчетом препятствий.',
-    bypasses: ['GrimAC', 'Smart Raytrace'],
-    hotkey: 'F',
-    iconName: 'Compass',
-    isPopular: true
-  },
-  {
-    id: 'velocity',
-    name: 'Velocity (Анти-Отдача)',
-    category: 'Combat',
-    description: 'Полное или процентное отключение отталкивания при ударах, взрывах динамита и выстрелах из лука под GrimAC.',
-    bypasses: ['GrimAC Velocity', 'Vanilla Packet'],
-    hotkey: 'V',
-    iconName: 'Shield',
-    isPopular: true
-  },
-  {
-    id: 'autototem',
-    name: 'AutoTotem & GApple',
-    category: 'Combat',
-    description: 'Подстановка тотема бессмертия во вторую руку при критическом здоровье + авто-поедание золотых яблок.',
-    bypasses: ['GrimAC 1.21', 'Vanilla Packet'],
-    hotkey: 'T',
-    iconName: 'HeartHandshake',
-    isPopular: true
-  },
-  {
-    id: 'criticals',
-    name: 'Criticals (Криты)',
-    category: 'Combat',
-    description: 'Каждый удар наносится с эффектом падения и критическим уроном даже при беге по земле или стоя на месте.',
-    bypasses: ['GrimAC Packet', 'Mini-Hop'],
-    iconName: 'Zap'
-  },
-  {
     id: 'triggerbot',
-    name: 'TriggerBot & Reach',
+    name: 'TriggerBot',
     category: 'Combat',
-    description: 'Легитный триггер с дистанцией удара до 3.8–6.0 блоков и рандомизацией задержек.',
-    bypasses: ['GrimAC Legit', 'Raycast Bypass'],
+    description: 'Автоматический удар, когда прицел наведён на цель. Поддерживает крит-режим и рандомизацию задержки.',
+    bypasses: ['Vanilla Raycast'],
     hotkey: 'X',
     iconName: 'Crosshair'
   },
   {
-    id: 'fly',
-    name: 'Grim Fly',
-    category: 'Movement',
-    description: 'Полет на серверах через манипуляцию пакетами под античит GrimAC.',
-    bypasses: ['GrimAC Exploit', 'Packet Mode'],
-    hotkey: 'G',
-    iconName: 'Plane',
-    isPopular: true
+    id: 'aimassist',
+    name: 'AimAssist',
+    category: 'Combat',
+    description: 'Плавное притяжение прицела к цели при движении мыши. GCD-квантизация, FOV, настраиваемая сила.',
+    bypasses: ['GCD Quantization'],
+    iconName: 'Compass'
   },
   {
-    id: 'speed',
-    name: 'Speed (Bhop & Strafe)',
+    id: 'nofrienddamage',
+    name: 'NoFriendDamage',
+    category: 'Combat',
+    description: 'Блокирует удары по игрокам из списка друзей.',
+    bypasses: ['Client-side'],
+    iconName: 'Shield'
+  },
+
+  // ── Movement ──────────────────────────────────────────────────────
+  {
+    id: 'sprint',
+    name: 'Sprint',
     category: 'Movement',
-    description: 'Ускорение бега, прыжки баннихопом и быстрый стрейф по воде и льду под GrimAC.',
-    bypasses: ['GrimAC LowHop', 'Strafe 1.21'],
-    hotkey: 'B',
+    description: 'Автоматическое удержание спринта при движении с проверкой голода и эффектов.',
+    bypasses: ['Vanilla Input'],
     iconName: 'FastForward'
   },
   {
     id: 'noslow',
-    name: 'NoSlowdown (NoSlow)',
+    name: 'NoSlow',
     category: 'Movement',
-    description: 'Отсутствие замедления при блокировании мечом/щитом, натягивании тетивы лука, поедании еды, булаве и паутине.',
-    bypasses: ['GrimAC NoSlow', 'Vanilla Packet'],
+    description: 'Убирает замедление при использовании предметов (еда, щит, лук). Режим Vanilla.',
+    bypasses: ['Vanilla Only'],
     iconName: 'Footprints'
   },
   {
-    id: 'longjump',
-    name: 'LongJump & HighJump',
+    id: 'nopush',
+    name: 'NoPush',
     category: 'Movement',
-    description: 'Дальние прыжки через каньоны и перепрыгивание препятствий на скорости.',
-    bypasses: ['GrimAC Damage Boost', 'Bow Boost'],
+    description: 'Отключает отталкивание от сущностей и водных потоков.',
+    bypasses: ['Client-side'],
     iconName: 'ArrowUpRight'
   },
   {
-    id: 'esp',
-    name: '3D ESP & Glowing Chams',
+    id: 'autosneak',
+    name: 'AutoSneak',
+    category: 'Movement',
+    description: 'Приседание у края блоков при движении — защита от случайного падения.',
+    bypasses: ['Vanilla Input'],
+    iconName: 'Footprints'
+  },
+  {
+    id: 'nofall',
+    name: 'NoFall',
+    category: 'Movement',
+    description: 'Отмена урона от падения. Режимы Vanilla и Packet.',
+    bypasses: ['Vanilla Only'],
+    iconName: 'Shield'
+  },
+
+  // ── Render ────────────────────────────────────────────────────────
+  {
+    id: 'clickgui',
+    name: 'ClickGui',
     category: 'Render',
-    description: 'Подсветка игроков сквозь стены, 3D боксы, скелеты, линии трассировки, полоски здоровья и брони.',
-    bypasses: ['Клиентский рендер'],
-    hotkey: 'Z',
+    description: 'Графический интерфейс на Right Shift. Панели по категориям, поиск модулей, drag & drop.',
+    bypasses: ['UI'],
+    hotkey: 'RShift',
+    iconName: 'Layout'
+  },
+  {
+    id: 'watermark',
+    name: 'Watermark',
+    category: 'Render',
+    description: 'HUD с ником, FPS и временем. Перетаскивается мышью, сохраняет позицию в конфиг.',
+    bypasses: ['HUD'],
+    iconName: 'Eye'
+  },
+  {
+    id: 'nametags',
+    name: 'Nametags',
+    category: 'Render',
+    description: 'Имена игроков над головой с HP, пингом и меткой друга.',
+    bypasses: ['HUD'],
     iconName: 'Eye',
     isPopular: true
   },
   {
-    id: 'targethud',
-    name: 'TargetHUD & UI',
+    id: 'friendesp',
+    name: 'FriendESP',
     category: 'Render',
-    description: 'Информационная панель противника: ник, HP, броня, статус зелий и анимация урона.',
-    bypasses: ['Визуальный модуль'],
+    description: 'Подсветка друзей рамкой и линией через стены (2D-проекция).',
+    bypasses: ['Client-side'],
+    iconName: 'Eye'
+  },
+  {
+    id: 'friendhud',
+    name: 'FriendHUD',
+    category: 'Render',
+    description: 'Панель с HP и пингом онлайн-друзей. Перетаскивается мышью.',
+    bypasses: ['HUD'],
     iconName: 'Layout'
   },
   {
-    id: 'itemesp',
-    name: 'Storage & Item ESP',
+    id: 'friendarrow',
+    name: 'FriendArrow',
     category: 'Render',
-    description: 'Подсветка сундуков, шалкеров, воронок, элитр, алмазной руды, ветровых зарядов и выпавших предметов.',
-    bypasses: ['Anti-Xray Bypass'],
-    iconName: 'Package'
+    description: 'Стрелки вокруг центра экрана в сторону друзей.',
+    bypasses: ['HUD'],
+    iconName: 'Compass'
   },
   {
-    id: 'scaffold',
-    name: 'Scaffold (Grim Bridge)',
+    id: 'freecam',
+    name: 'FreeCam',
+    category: 'Render',
+    description: 'Свободная камера без движения тела. Спуф позиции, выход при уроне.',
+    bypasses: ['Vanilla Packet'],
+    iconName: 'Eye'
+  },
+  {
+    id: 'zoom',
+    name: 'Zoom',
+    category: 'Render',
+    description: 'Приближение камеры на биндклавишу с плавной интерполяцией FOV.',
+    bypasses: ['Client-side'],
+    hotkey: 'C',
+    iconName: 'Eye'
+  },
+  {
+    id: 'nobob',
+    name: 'NoBob',
+    category: 'Render',
+    description: 'Убирает покачивание камеры при ходьбе.',
+    bypasses: ['Client-side'],
+    iconName: 'Layout'
+  },
+  {
+    id: 'nofov',
+    name: 'NoFov',
+    category: 'Render',
+    description: 'Отключает FOV-эффекты (спринт, зелья, лук).',
+    bypasses: ['Client-side'],
+    iconName: 'Layout'
+  },
+  {
+    id: 'antiblind',
+    name: 'AntiBlind',
+    category: 'Render',
+    description: 'Убирает эффекты темноты и слепоты.',
+    bypasses: ['Client-side'],
+    iconName: 'Eye'
+  },
+  {
+    id: 'nohurtcam',
+    name: 'NoHurtCam',
+    category: 'Render',
+    description: 'Убирает тряску камеры при получении урона.',
+    bypasses: ['Client-side'],
+    iconName: 'Shield'
+  },
+  {
+    id: 'fullbright',
+    name: 'FullBright',
+    category: 'Render',
+    description: 'Убирает темноту — гамма на максимум.',
+    bypasses: ['Client-side'],
+    iconName: 'Eye'
+  },
+
+  // ── Player ────────────────────────────────────────────────────────
+  {
+    id: 'nodelay',
+    name: 'NoDelay',
     category: 'Player',
-    description: 'Автоматическая постройка мостов под собой на бегу спиной вперед.',
-    bypasses: ['GrimAC Scaffold', 'Legit Bridge'],
-    hotkey: 'H',
-    iconName: 'Grid',
-    isPopular: true
+    description: 'Убирает задержку прыжка, ломания блоков и правого клика.',
+    bypasses: ['Vanilla Delay'],
+    iconName: 'Zap'
+  },
+  {
+    id: 'nointeract',
+    name: 'NoInteract',
+    category: 'Player',
+    description: 'Блокирует случайное взаимодействие с блоками/сущностями (сундуки, двери, лодки).',
+    bypasses: ['Client-side'],
+    iconName: 'Shield'
   },
   {
     id: 'cheststealer',
-    name: 'ChestStealer & AutoArmor',
+    name: 'ChestStealer',
     category: 'Player',
-    description: 'Быстрое обчищение сундуков и авто-экипировка лучшей брони из инвентаря.',
-    bypasses: ['GrimAC Silent', 'No Open Anim'],
-    iconName: 'ShieldAlert'
+    description: 'Автоматическое обчищение сундуков с рандомизированной задержкой и случайным порядком.',
+    bypasses: ['Vanilla Packet'],
+    iconName: 'Package',
+    isPopular: true
   },
   {
-    id: 'anticheat-disabler',
-    name: 'GrimAC Packet Disabler',
-    category: 'Bypasses',
-    description: 'Модуль отсылки специальных пакетов для обхода проверок античита GrimAC на версии 1.21.',
-    bypasses: ['GrimAC 2.3.8', 'GrimAC Exploit'],
-    iconName: 'Cpu',
-    isPopular: true
+    id: 'autorespawn',
+    name: 'AutoRespawn',
+    category: 'Player',
+    description: 'Автоматическое возрождение после смерти с настраиваемой задержкой.',
+    bypasses: ['Vanilla Packet'],
+    iconName: 'HeartHandshake'
+  },
+  {
+    id: 'streamermode',
+    name: 'StreamerMode',
+    category: 'Player',
+    description: 'Скрывает ник и название клиента в HUD (для стримов и скриншотов).',
+    bypasses: ['HUD'],
+    iconName: 'Eye'
+  },
+
+  // ── World ─────────────────────────────────────────────────────────
+  {
+    id: 'timechanger',
+    name: 'TimeChanger',
+    category: 'World',
+    description: 'Клиентское изменение времени суток (день/ночь/закат и т.д.).',
+    bypasses: ['Client-side'],
+    iconName: 'Compass'
   }
 ];
 
 export const CLOUD_CONFIGS: CloudConfig[] = [
   {
-    id: 'cfg-grim-hvh',
-    name: 'GrimAC_HvH_Rage_1.21.cfg',
-    server: 'GrimAC (1.21)',
+    id: 'cfg-default-hvh',
+    name: 'default_hvh.cfg',
+    server: 'Any',
     playstyle: 'Rage / HvH',
-    author: 'Dexum_Dev',
-    downloads: 14820,
-    rating: 4.9,
-    lastUpdated: 'Сегодня, 14:20',
-    modulesCount: 38,
-    description: 'Конфиг под дуэли и аир-дропы на серверах GrimAC 1.21. Настроен KillAura 3.65b, AutoTotem, GrimFly и TargetStrafe.'
+    author: 'Dexum',
+    downloads: 0,
+    rating: 5,
+    lastUpdated: 'Стартовый',
+    modulesCount: 12,
+    description: 'Базовый HvH-пресет: Aura, TriggerBot, NoSlow, Sprint, NoFall, NoPush. Скачайте и положите в dexum/configs/, затем .config load default_hvh'
   },
   {
-    id: 'cfg-grim-anarchy',
-    name: 'GrimAC_Anarchy_1.21.cfg',
-    server: 'GrimAC (1.21)',
-    playstyle: 'Anarchy',
-    author: 'ShadowGrim',
-    downloads: 9450,
-    rating: 4.8,
-    lastUpdated: 'Вчера',
-    modulesCount: 32,
-    description: 'Идеален для рейда баз и гриферства на 1.21. Включен NoSlow, AutoTotem, Speed, FastBreak и StorageESP.'
-  },
-  {
-    id: 'cfg-grim-legit',
-    name: 'GrimAC_Legit_Closet_1.21.cfg',
-    server: 'GrimAC (1.21)',
+    id: 'cfg-default-legit',
+    name: 'default_legit.cfg',
+    server: 'Any',
     playstyle: 'Legit / Closet',
-    author: 'VortexLegit',
-    downloads: 18900,
-    rating: 5.0,
-    lastUpdated: '3 дня назад',
-    modulesCount: 18,
-    description: 'Легитная конфигурация под GrimAC 1.21: автокликер 12-16 CPS, Reach 3.15, FastPlace.'
+    author: 'Dexum',
+    downloads: 0,
+    rating: 5,
+    lastUpdated: 'Стартовый',
+    modulesCount: 8,
+    description: 'Легитный пресет: AimAssist, TriggerBot (только криты), Nametags, NoHurtCam. Минимальный визуальный шум.'
   },
   {
-    id: 'cfg-sunrise-rage',
-    name: 'SunRise_GrimAC_1.21.cfg',
-    server: 'SunRise (1.21)',
-    playstyle: 'Rage / HvH',
-    author: 'DeltaMaster',
-    downloads: 4120,
-    rating: 4.7,
-    lastUpdated: '5 дней назад',
-    modulesCount: 41,
-    description: 'Rage конфигурация для 1.21 с GrimAC. Полет, дальнобойная аура и Scaffold.'
+    id: 'cfg-pvp-full',
+    name: 'pvp_full.cfg',
+    server: 'Any',
+    playstyle: 'Semi-Rage',
+    author: 'Dexum',
+    downloads: 0,
+    rating: 5,
+    lastUpdated: 'Стартовый',
+    modulesCount: 20,
+    description: 'Максимальный набор для PvP: все combat-модули + визуал + утилиты (ChestStealer, NoDelay, NoInteract).'
   }
 ];
 
+// ОСТАЛЬНОЕ ОСТАВЛЯЕМ КАК ЕСТЬ (INITIAL_USERS, INITIAL_ORDERS — это тестовые данные)
+// Но INITIAL_USERS хардкодит admin/password — это уйдёт после подключения бэкенда.
+
 export const INITIAL_USERS: User[] = [
+<<<<<<< HEAD
   {
     id: 'usr-admin',
     name: 'Alex Morozov (Admin)',
@@ -415,78 +458,36 @@ export const INITIAL_USERS: User[] = [
     totpEnabled: false,
     licenses: []
   }
+=======
+  // ... оставить существующий код, но перед релизом УДАЛИТЬ и заменить на реальных из БД
+>>>>>>> 362b3dc (Initial commit: Dexum Client site)
 ];
 
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-901',
-    userId: 'usr-buyer',
-    userName: 'xX_ShadowPvP_Xx',
-    productId: 'dexum-lifetime',
-    productName: 'Dexum Client Lifetime (1.21)',
-    amount: 1990,
-    paymentMethod: 'sbp',
-    status: 'completed',
-    date: '2026-02-14 18:42',
-    licenseKey: 'DXM-LIFE-8821-9940-PVPGOD'
-  },
-  {
-    id: 'ord-902',
-    userId: 'usr-buyer',
-    userName: 'xX_ShadowPvP_Xx',
-    productId: 'dexum-configs-vip',
-    productName: 'VIP Cloud Config Pack (1.21)',
-    amount: 290,
-    paymentMethod: 'card',
-    status: 'completed',
-    date: '2026-02-14 18:45',
-    licenseKey: 'CFG-PACK-VIP-3391'
-  },
-  {
-    id: 'ord-903',
-    userId: 'usr-782',
-    userName: 'KillauraKing',
-    productId: 'dexum-30-days',
-    productName: 'Dexum Client 30 Дней (1.21)',
-    amount: 490,
-    paymentMethod: 'crypto',
-    status: 'completed',
-    date: '2026-03-02 12:10',
-    licenseKey: 'DXM-30D-4410-8821-FTWIN'
-  },
-  {
-    id: 'ord-904',
-    userId: 'usr-194',
-    userName: 'VortexAnarchy',
-    productId: 'dexum-lifetime',
-    productName: 'Dexum Client Lifetime (1.21)',
-    amount: 1990,
-    paymentMethod: 'sbp',
-    status: 'completed',
-    date: '2026-03-02 15:33',
-    licenseKey: 'DXM-LIFE-9912-4412-RWGOD'
-  }
-];
+export const INITIAL_ORDERS: Order[] = [];
 
 export const FAQ_ITEMS = [
   {
-    question: 'Как установить клиент Dexum 1.21 после покупки?',
-    answer: 'После оплаты вы мгновенно получаете лицензионный ключ и доступ к скачиванию в личном кабинете. Скачайте официальный лаунчер DexumLauncher.exe (или .jar версию для Fabric / NeoForge 1.21), запустите его, введите ваш ключ или логин и нажмите «Играть».'
+    question: 'Какие версии Minecraft поддерживаются?',
+    answer: 'Клиент работает на Fabric Loader для Minecraft 26.2. NeoForge и другие лоадеры не поддерживаются.'
   },
   {
-    question: 'На каких серверах Minecraft 1.21 работают обходы?',
-    answer: 'Клиент оптимизирован исключительно под сервера Minecraft 1.21 с античитом GrimAC (включая GrimAC 2.3.8).'
+    question: 'Как установить клиент?',
+    answer: 'Установите Fabric Loader для 26.2, скачайте jar-файл клиента из личного кабинета и положите его в папку mods. При первом запуске клиент создаст папку dexum/ в директории игры (рядом с папкой mods).'
   },
   {
-    question: 'Как работает привязка по HWID и сброс?',
-    answer: 'Лицензия привязывается к вашему компьютеру (HWID) при первом запуске лаунчера. Если вы переустановили Windows или сменили комплектующие, вы можете сбросить HWID в Личном кабинете.'
+    question: 'Что умеет клиент?',
+    answer: 'Клиент включает модули для боя (Aura, TriggerBot, AimAssist, NoFriendDamage), движения (Sprint, NoSlow, NoPush, AutoSneak, NoFall), рендера (ClickGui, Nametags, FriendESP/HUD/Arrow, FreeCam, Zoom, NoBob, NoFov, AntiBlind, NoHurtCam, FullBright, Watermark) и игрока (NoDelay, NoInteract, ChestStealer, AutoRespawn, StreamerMode, TimeChanger). Полный список — в разделе «Функции».'
+  },
+  {
+    question: 'Как работает привязка HWID?',
+    answer: 'При первом запуске клиент привязывается к железу вашего ПК. Если вы переустановили Windows или сменили комплектующие — сбросьте HWID в личном кабинете на сайте (доступно 1 раз в 30 дней).'
   },
   {
     question: 'Какие способы оплаты принимаются?',
-    answer: 'Мы принимаем СБП (Система Быстрых Платежей), Банковские карты (МИР, Visa, Mastercard), ЮMoney, Криптовалюту (USDT TRC-20, TON, BTC, TRX) и баланс аккаунта.'
+    answer: 'Оплата через FunPay (безопасная сделка), СБП, банковские карты и криптовалюту. Ключ выдаётся автоматически после подтверждения платежа.'
   },
   {
-    question: 'Что делать, если возникли вопросы или нужна помощь с настройкой 1.21?',
-    answer: 'В нашем Telegram-канале и Discord-сообществе работает техподдержка. Также в клиенте есть база готовых облачных конфигов 1.21 от разработчиков.'
+    question: 'Есть ли возврат средств?',
+    answer: 'Возврат возможен в течение 24 часов после покупки, если ключ не был активирован. После активации лицензии возврат не производится.'
   }
 ];

@@ -28,21 +28,19 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeToggledModules, setActiveToggledModules] = useState<Record<string, boolean>>({
-    killaura: true,
-    velocity: true,
-    autototem: true,
-    targetstrafe: true,
-    esp: true,
-    noslow: true
+    aura: true,
+    noslow: true,
+    sprint: true,
+    nofall: true,
+    nametags: true
   });
 
-  const categories = ['All', 'Combat', 'Movement', 'Render', 'Player', 'Bypasses'];
+  const categories = ['All', 'Combat', 'Movement', 'Render', 'Player', 'World'];
 
   const filteredModules = MODULES.filter(m => {
     const matchesCat = selectedCategory === 'All' || m.category === selectedCategory;
     const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          m.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          m.bypasses.some(b => b.toLowerCase().includes(searchQuery.toLowerCase()));
+                          m.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesSearch;
   });
 
@@ -77,22 +75,20 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
   return (
     <div className="space-y-8 pb-16">
       
-      {/* Header */}
       <div className="p-8 rounded-2xl bg-[#111114] border border-white/10 text-center space-y-3">
         <h1 className="text-3xl font-extrabold text-white">
-          Функционал и модули чита
+          Модули клиента
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
-          Каталог модулей с поддержкой горячих клавиш и актуальными обходами.
+          {MODULES.length} модулей в 5 категориях. Поддержка горячих клавиш и ClickGui.
         </p>
 
-        {/* Search */}
         <div className="max-w-md mx-auto pt-1">
           <div className="relative">
             <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Поиск модуля или античита..."
+              placeholder="Поиск модуля..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/30"
@@ -101,7 +97,6 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
         </div>
       </div>
 
-      {/* Category Pills */}
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         {categories.map((cat) => (
           <button
@@ -118,7 +113,6 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
         ))}
       </div>
 
-      {/* Modules Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {filteredModules.map((m) => {
           const isToggled = !!activeToggledModules[m.id];
@@ -133,7 +127,6 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
               }`}
             >
               <div>
-                {/* Header with Icon and Toggle */}
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white">
@@ -151,7 +144,6 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
                       </span>
                     )}
 
-                    {/* Toggle Button */}
                     <button
                       type="button"
                       onClick={() => toggleModule(m.id)}
@@ -173,27 +165,22 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
                 </p>
               </div>
 
-              {/* Bypasses tags */}
               <div className="pt-2.5 border-t border-white/5 flex flex-wrap gap-1">
-                {m.bypasses.map((byp, i) => (
-                  <span key={i} className="px-1.5 py-0.5 rounded bg-[#0b0b0e] text-[10px] font-mono text-zinc-400 border border-white/5">
-                    ✓ {byp}
-                  </span>
-                ))}
+                <span className="px-1.5 py-0.5 rounded bg-[#0b0b0e] text-[10px] font-mono text-zinc-400 border border-white/5">
+                  {m.category}
+                </span>
               </div>
-
             </div>
           );
         })}
       </div>
 
-      {/* Buy CTA */}
       <div className="p-6 rounded-2xl bg-[#111114] border border-white/10 text-center space-y-2">
         <h3 className="text-lg font-bold text-white">
-          Готовы протестировать клиент в игре?
+          Готовы попробовать?
         </h3>
         <p className="text-xs text-zinc-400 max-w-md mx-auto">
-          Получите ключ и скачайте официальный установщик прямо сейчас.
+          Получите ключ, скачайте jar и установите в папку mods Fabric 1.21.x.
         </p>
         <button
           onClick={() => onOpenBuyModal('dexum-lifetime')}
