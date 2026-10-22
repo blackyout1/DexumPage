@@ -1,482 +1,623 @@
-import React, { useState } from 'react';
-import { 
-  X, 
-  Gamepad2, 
-  AlertCircle,
-  KeyRound,
-  ShieldCheck,
-  CheckCircle2,
-  Mail,
-  ArrowLeft,
-  Smartphone
-} from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User, SoftwareProduct, Order, License } from '../types';
+import { INITIAL_USERS, PRODUCTS, INITIAL_ORDERS } from '../data/mockData';
+import { generateBase32Secret, verifyTOTPToken } from '../utils/totp';
+import QRCode from 'qrcode';
 
-interface AuthModalProps {
-  isOpen: boolean;
-  initialTab?: 'login' | 'register' | 'forgot_password';
-  onClose: () => void;
+interface AuthContextType {
+  currentUser: User | null;
+  users: User[];
+  orders: Order[];
+  products: SoftwareProduct[];
+  login: (email: string, pass: string, totpCode?: string) => Promise<{ success: boolean; message: string; requires2FA?: boolean }>;
+  register: (name: string, email: string, pass: string) => Promise<{ success: boolean; message: string; demoCode?: string }>;
+  logout: () => void;
+  purchaseProduct: (productId: string, paymentMethod: 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance' | 'funpay', promoCode?: string) => { success: boolean; message: string; licenseKey?: string };
+  resetHwid: (licenseId: string) => { success: boolean; message: string };
+  activateKey: (key: string) => { success: boolean; message: string; license?: License };
+  adminGenerateKey: (productId: string, duration: '30' | '90' | 'lifetime') => { key: string; expiresAt: string };
+  adminToggleBan: (userId: string) => void;
+  adminResetUserHwid: (userId: string) => void;
+  adminDeleteUser: (userId: string) => void;
+  adminClearAllUsers: () => void;
+  updateMinecraftNick: (nick: string) => void;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string; resetToken?: string; demoCode?: string }>;
+  confirmPasswordReset: (token: string, code: string, newPass: string) => Promise<{ success: boolean; message: string }>;
+  confirmEmailVerification: (code: string) => Promise<{ success: boolean; message: string }>;
+  setup2FA: () => Promise<{ success: boolean; secret?: string; qrCode?: string; message?: string }>;
+  enable2FA: (secret: string, code: string) => Promise<{ success: boolean; message: string }>;
+  disable2FA: (code: string) => Promise<{ success: boolean; message: string }>;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({
-  isOpen,
-  initialTab = 'login',
-  onClose
-}) => {
-  const { login, register, users, switchDemoUser, requestPasswordReset, confirmPasswordReset } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot_password'>(initialTab);
-  
-  // Basic Form States
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  
-  // 2FA Prompt State during Login
-  const [needs2FA, setNeeds2FA] = useState(false);
-  const [totpCode, setTotpCode] = useState('');
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-  // Password Reset States
-  const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
-  const [resetToken, setResetToken] = useState('');
-  const [resetCode, setResetCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [demoHintCode, setDemoHintCode] = useState<string | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('dexum_store_users');
+    return saved ? JSON.parse(saved) : INITIAL_USERS;
+  });
 
-  // Status & Feedback
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const saved = localStorage.getItem('dexum_store_orders');
+    return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+  });
 
-  if (!isOpen) return null;
+  const [currentUserId, setCurrentUserId] = useState<string>(() => {
+    const saved = localStorage.getItem('dexum_current_user_id');
+    return saved || '';
+  });
 
-  const resetAllFields = () => {
-    setErrorMsg('');
-    setSuccessMsg('');
-    setNeeds2FA(false);
-    setTotpCode('');
-    setResetStep('request');
-    setResetToken('');
-    setResetCode('');
-    setNewPassword('');
-    setDemoHintCode(null);
-  };
+  const [emailCodes, setEmailCodes] = useState<Record<string, { code: string; expiresAt: number }>>(() => {
+    const saved = localStorage.getItem('dexum_email_codes');
+    return saved ? JSON.parse(saved) : {};
+  });
 
-  const handleTabChange = (tab: 'login' | 'register' | 'forgot_password') => {
-    resetAllFields();
-    setActiveTab(tab);
-  };
+  const [resetCodes, setResetCodes] = useState<Record<string, { userId: string; code: string; expiresAt: number }>>(() => {
+    const saved = localStorage.getItem('dexum_reset_codes');
+    return saved ? JSON.parse(saved) : {};
+  });
 
-  // 1. Submit Login / Register
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setSuccessMsg('');
-    setIsSubmitting(true);
+  const currentUser = users.find(u => u.id === currentUserId) || null;
 
+  useEffect(() => {
+    localStorage.setItem('dexum_store_users', JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    localStorage.setItem('dexum_store_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('dexum_email_codes', JSON.stringify(emailCodes));
+  }, [emailCodes]);
+
+  useEffect(() => {
+    localStorage.setItem('dexum_reset_codes', JSON.stringify(resetCodes));
+  }, [resetCodes]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      localStorage.setItem('dexum_current_user_id', currentUserId);
+    } else {
+      localStorage.removeItem('dexum_current_user_id');
+    }
+  }, [currentUserId]);
+
+  const login = async (email: string, pass: string, totpCode?: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    
     try {
-      if (activeTab === 'login') {
-        const res = await login(email, password, needs2FA ? totpCode : undefined);
-        setIsSubmitting(false);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password: pass, totpCode })
+      });
 
-        if (res.requires2FA) {
-          setNeeds2FA(true);
-          setErrorMsg('');
-          return;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.requires2FA) {
+          return { success: false, requires2FA: true, message: data.message };
         }
-
-        if (res.success) {
-          onClose();
-        } else {
-          setErrorMsg(res.message);
-        }
-      } else if (activeTab === 'register') {
-        const res = await register(name, email, password);
-        setIsSubmitting(false);
-
-        if (res.success) {
-          setSuccessMsg(res.message);
-          if (res.demoCode) {
-            setDemoHintCode(res.demoCode);
-          }
-          setTimeout(() => {
-            onClose();
-          }, 1800);
-        } else {
-          setErrorMsg(res.message);
+        if (data.success && data.user) {
+          const serverUser = data.user;
+          setUsers(prev => {
+            const idx = prev.findIndex(u => u.id === serverUser.id || u.email.toLowerCase() === cleanEmail);
+            if (idx !== -1) {
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], ...serverUser };
+              return updated;
+            }
+            return [serverUser, ...prev];
+          });
+          setCurrentUserId(serverUser.id);
+          return { success: true, message: data.message };
         }
       }
+    } catch {
+      // Cloudflare Pages static route
+    }
+
+    const found = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (!found) {
+      return { success: false, message: 'Пользователь с таким Email не найден.' };
+    }
+
+    if (found.isBanned) {
+      return { success: false, message: 'Ваш аккаунт заблокирован администратором.' };
+    }
+
+    if (found.password && found.password !== pass) {
+      return { success: false, message: 'Неверный пароль. Проверьте правильность ввода.' };
+    }
+
+    if (found.totpEnabled && found.totpSecret) {
+      if (!totpCode) {
+        return { success: false, requires2FA: true, message: 'Требуется ввод 6-значного кода из Google Authenticator' };
+      }
+
+      const isValid = await verifyTOTPToken(totpCode, found.totpSecret);
+      if (!isValid) {
+        return { success: false, requires2FA: true, message: 'Неверный 6-значный код 2FA! Введите актуальный код из приложения Google Authenticator.' };
+      }
+    }
+
+    setCurrentUserId(found.id);
+    return { success: true, message: `С возвращением, ${found.name}!` };
+  };
+
+  const register = async (name: string, email: string, pass: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+
+    if (!cleanName || !cleanEmail || !pass) {
+      return { success: false, message: 'Заполните все обязательные поля.' };
+    }
+
+    if (pass.length < 6) {
+      return { success: false, message: 'Пароль должен быть не менее 6 символов.' };
+    }
+
+    const existing = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (existing) {
+      return { success: false, message: 'Пользователь с таким Email уже зарегистрирован! Войдите в аккаунт.' };
+    }
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: cleanName, email: cleanEmail, password: pass })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        return { success: false, message: data.message || 'Ошибка регистрации' };
+      }
+
+      const serverUser: User = {
+        ...data.user,
+        hwid: null,
+        licenses: []
+      };
+
+      setUsers(prev => [serverUser, ...prev.filter(u => u.email.toLowerCase() !== cleanEmail)]);
+      setCurrentUserId(serverUser.id);
+      return {
+        success: true,
+        message: data.message,
+        demoCode: data.demoVerificationCode
+      };
+    } catch {
+      // Offline
+    }
+
+    if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
+      return { success: false, message: 'Пользователь с таким Email уже зарегистрирован!' };
+    }
+
+    const userId = `usr-${Date.now()}`;
+    const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const newUser: User = {
+      id: userId,
+      name: cleanName,
+      email: cleanEmail,
+      password: pass,
+      role: 'user',
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cleanName)}`,
+      hwid: null,
+      registeredAt: new Date().toISOString().split('T')[0],
+      balance: 0,
+      isEmailVerified: false,
+      totpEnabled: false,
+      licenses: []
+    };
+
+    setEmailCodes(prev => ({
+      ...prev,
+      [userId]: { code: verifyCode, expiresAt: Date.now() + 15 * 60 * 1000 }
+    }));
+
+    setUsers(prev => [newUser, ...prev]);
+    setCurrentUserId(newUser.id);
+
+    return { 
+      success: true, 
+      message: 'Аккаунт успешно создан!',
+      demoCode: verifyCode
+    };
+  };
+
+  const logout = () => {
+    setCurrentUserId('');
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const user = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (!user) {
+      return { success: false, message: 'Аккаунт с таким Email не найден.' };
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const token = 'rst-' + Math.random().toString(36).substring(2) + Date.now();
+
+    setResetCodes(prev => ({
+      ...prev,
+      [token]: { userId: user.id, code, expiresAt: Date.now() + 15 * 60 * 1000 }
+    }));
+
+    return {
+      success: true,
+      message: `Код подтверждения сгенерирован для ${cleanEmail}`,
+      resetToken: token,
+      demoCode: code
+    };
+  };
+
+  const confirmPasswordReset = async (token: string, code: string, newPass: string) => {
+    const session = resetCodes[token];
+    if (!session) {
+      return { success: false, message: 'Сессия сброса устарела. Запросите код заново.' };
+    }
+
+    if (Date.now() > session.expiresAt) {
+      return { success: false, message: 'Срок действия кода истек (15 минут).' };
+    }
+
+    if (session.code !== code.trim()) {
+      return { success: false, message: 'Неверный код подтверждения! Проверьте 6 цифр.' };
+    }
+
+    if (newPass.length < 6) {
+      return { success: false, message: 'Новый пароль должен содержать от 6 символов.' };
+    }
+
+    setUsers(prev => prev.map(u => {
+      if (u.id === session.userId) {
+        return { ...u, password: newPass, isEmailVerified: true };
+      }
+      return u;
+    }));
+
+    setResetCodes(prev => {
+      const copy = { ...prev };
+      delete copy[token];
+      return copy;
+    });
+
+    return { success: true, message: 'Пароль успешно изменен! Войдите с новым паролем.' };
+  };
+
+  const confirmEmailVerification = async (code: string) => {
+    if (!currentUser) return { success: false, message: 'Необходима авторизация' };
+
+    const cleanCode = code.trim();
+    const session = emailCodes[currentUser.id];
+
+    if (!session) {
+      return { success: false, message: 'Код подтверждения не найден. Запросите новый.' };
+    }
+
+    if (Date.now() > session.expiresAt) {
+      return { success: false, message: 'Срок действия кода истек.' };
+    }
+
+    if (session.code !== cleanCode) {
+      return { success: false, message: 'Неверный код подтверждения!' };
+    }
+
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, isEmailVerified: true } : u));
+    return { success: true, message: 'Почта успешно подтверждена!' };
+  };
+
+  const setup2FA = async () => {
+    if (!currentUser) return { success: false, message: 'Пользователь не найден' };
+
+    try {
+      const clientSecret = generateBase32Secret();
+      const accountName = currentUser.email.trim();
+      const issuer = 'Dexum';
+      
+      const otpauth = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}?secret=${clientSecret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+
+      const clientQrCode = await QRCode.toDataURL(otpauth, {
+        errorCorrectionLevel: 'M',
+        margin: 3,
+        width: 256,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
+
+      return {
+        success: true,
+        secret: clientSecret,
+        qrCode: clientQrCode
+      };
     } catch (err: any) {
-      setIsSubmitting(false);
-      setErrorMsg(err.message || 'Произошла непредвиденная ошибка');
+      return { success: false, message: 'Ошибка генерации 2FA: ' + err.message };
     }
   };
 
-  // 2. Request Password Reset (Send email code)
-  const handleRequestReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setSuccessMsg('');
-    setIsSubmitting(true);
+  const enable2FA = async (secret: string, code: string) => {
+    if (!currentUser) return { success: false, message: 'Пользователь не найден' };
 
-    const res = await requestPasswordReset(email);
-    setIsSubmitting(false);
-
-    if (res.success) {
-      setSuccessMsg(res.message);
-      if (res.resetToken) setResetToken(res.resetToken);
-      if (res.demoCode) setDemoHintCode(res.demoCode);
-      setResetStep('verify');
-    } else {
-      setErrorMsg(res.message);
+    const isValid = await verifyTOTPToken(code.trim(), secret.trim());
+    if (!isValid) {
+      return { 
+        success: false, 
+        message: 'Неверный 6-значный код! Введите точный код из приложения Google Authenticator на телефоне.' 
+      };
     }
+
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: true, totpSecret: secret } : u));
+    return { success: true, message: 'Google Authenticator успешно подключен!' };
   };
 
-  // 3. Confirm Password Reset (Enter 6-digit code + new password)
-  const handleConfirmReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setSuccessMsg('');
-    setIsSubmitting(true);
+  const disable2FA = async (code: string) => {
+    if (!currentUser) return { success: false, message: 'Пользователь не найден' };
 
-    const res = await confirmPasswordReset(resetToken, resetCode, newPassword);
-    setIsSubmitting(false);
-
-    if (res.success) {
-      setSuccessMsg('Пароль успешно обновлен! Вы можете войти с новым паролем.');
-      setDemoHintCode(null);
-      setTimeout(() => {
-        handleTabChange('login');
-      }, 1500);
-    } else {
-      setErrorMsg(res.message);
+    if (currentUser.totpEnabled && currentUser.totpSecret) {
+      const isValid = await verifyTOTPToken(code.trim(), currentUser.totpSecret);
+      if (!isValid) {
+        return { success: false, message: 'Неверный 6-значный код из Google Authenticator для отключения!' };
+      }
     }
+
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, totpEnabled: false, totpSecret: undefined } : u));
+    return { success: true, message: 'Двухфакторная защита 2FA отключена.' };
   };
 
-  const handleQuickLogin = (userId: string) => {
-    switchDemoUser(userId);
-    onClose();
+  const purchaseProduct = (
+    productId: string,
+    paymentMethod: 'sbp' | 'card' | 'crypto' | 'yoomoney' | 'balance' | 'funpay',
+    promoCode?: string
+  ) => {
+    if (!currentUser) {
+      return { success: false, message: 'Для покупки необходимо авторизоваться на сайте.' };
+    }
+
+    const product = PRODUCTS.find(p => p.id === productId);
+    if (!product) {
+      return { success: false, message: 'Товар не найден.' };
+    }
+
+    let finalPrice = product.price;
+    if (promoCode && ['DEXUM', 'DELTA', 'MINECRAFT', 'ACRONIX', '2026'].includes(promoCode.toUpperCase().trim())) {
+      finalPrice = Math.round(finalPrice * 0.85);
+    }
+
+    const keySuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const keyMid = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const generatedKey = `DXM-${product.category.toUpperCase()}-${keyMid}-${keySuffix}`;
+
+    const isLifetime = product.durationLabel.includes('Навсегда') || product.durationLabel.includes('Lifetime');
+    const daysRemaining = isLifetime ? 'unlimited' : (product.id.includes('90') ? 90 : 30);
+    const expiresAt = isLifetime ? 'Lifetime' : new Date(Date.now() + (daysRemaining as number) * 86400000).toISOString().split('T')[0];
+
+    const newLicense: License = {
+      id: `lic-${Date.now()}`,
+      productId: product.id,
+      productName: product.name,
+      key: generatedKey,
+      status: 'active',
+      expiresAt: expiresAt,
+      daysRemaining: daysRemaining,
+      hwid: currentUser.hwid || null,
+      hwidResetAvailable: true,
+      lastHwidReset: null,
+      activatedAt: new Date().toISOString().split('T')[0]
+    };
+
+    const newOrder: Order = {
+      id: `ord-${Date.now()}`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      productId: product.id,
+      productName: product.name,
+      amount: finalPrice,
+      paymentMethod,
+      status: 'completed',
+      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      licenseKey: generatedKey
+    };
+
+    setUsers(prev => prev.map(u => {
+      if (u.id === currentUser.id) {
+        return {
+          ...u,
+          role: u.role === 'user' ? 'buyer' : u.role,
+          licenses: [newLicense, ...u.licenses]
+        };
+      }
+      return u;
+    }));
+
+    setOrders(prev => [newOrder, ...prev]);
+
+    return {
+      success: true,
+      message: `Лицензия на ${product.name} успешно оформлена!`,
+      licenseKey: generatedKey
+    };
+  };
+
+  const resetHwid = (licenseId: string) => {
+    if (!currentUser) return { success: false, message: 'Авторизуйтесь в системе.' };
+
+    const lic = currentUser.licenses.find(l => l.id === licenseId);
+    if (!lic) return { success: false, message: 'Лицензия не найдена.' };
+
+    setUsers(prev => prev.map(u => {
+      if (u.id === currentUser.id) {
+        const updatedLicenses = u.licenses.map(l => {
+          if (l.id === licenseId) {
+            return {
+              ...l,
+              hwid: null,
+              lastHwidReset: new Date().toISOString().split('T')[0]
+            };
+          }
+          return l;
+        });
+
+        return {
+          ...u,
+          hwid: null,
+          licenses: updatedLicenses
+        };
+      }
+      return u;
+    }));
+
+    return {
+      success: true,
+      message: 'HWID успешно сброшен! Теперь вы можете запустить лаунчер на новом компьютере.'
+    };
+  };
+
+  const activateKey = (key: string) => {
+    if (!currentUser) return { success: false, message: 'Авторизуйтесь для активации ключа.' };
+
+    const cleanKey = key.trim().toUpperCase();
+
+    const alreadyOwned = currentUser.licenses.some(l => l.key.toUpperCase() === cleanKey);
+    if (alreadyOwned) {
+      return { success: false, message: 'Этот ключ уже активирован на вашем аккаунте.' };
+    }
+
+    let targetProduct = PRODUCTS[0];
+    let isLifetime = true;
+    let days: number | 'unlimited' = 'unlimited';
+
+    if (cleanKey.includes('30D')) {
+      targetProduct = PRODUCTS.find(p => p.id === 'dexum-30-days') || PRODUCTS[0];
+      isLifetime = false;
+      days = 30;
+    } else if (cleanKey.includes('90D')) {
+      targetProduct = PRODUCTS.find(p => p.id === 'dexum-90-days') || PRODUCTS[0];
+      isLifetime = false;
+      days = 90;
+    }
+
+    const expiresAt = isLifetime ? 'Lifetime' : new Date(Date.now() + (days as number) * 86400000).toISOString().split('T')[0];
+
+    const newLicense: License = {
+      id: `lic-${Date.now()}`,
+      productId: targetProduct.id,
+      productName: targetProduct.name,
+      key: cleanKey,
+      status: 'active',
+      expiresAt,
+      daysRemaining: days,
+      hwid: currentUser.hwid || null,
+      hwidResetAvailable: true,
+      lastHwidReset: null,
+      activatedAt: new Date().toISOString().split('T')[0]
+    };
+
+    setUsers(prev => prev.map(u => {
+      if (u.id === currentUser.id) {
+        return {
+          ...u,
+          role: u.role === 'user' ? 'buyer' : u.role,
+          licenses: [newLicense, ...u.licenses]
+        };
+      }
+      return u;
+    }));
+
+    return {
+      success: true,
+      message: `Ключ успешно активирован! Добавлена подписка: ${targetProduct.name}`,
+      license: newLicense
+    };
+  };
+
+  const adminGenerateKey = (productId: string, duration: '30' | '90' | 'lifetime') => {
+    const prefix = duration === 'lifetime' ? 'LIFE' : `${duration}D`;
+    const rand1 = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const rand2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const key = `DXM-${prefix}-${rand1}-${rand2}`;
+    const expiresAt = duration === 'lifetime' ? 'Lifetime' : new Date(Date.now() + parseInt(duration) * 86400000).toISOString().split('T')[0];
+
+    return { key, expiresAt };
+  };
+
+  const adminToggleBan = (userId: string) => {
+    setUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        return { ...u, isBanned: !u.isBanned };
+      }
+      return u;
+    }));
+  };
+
+  const adminResetUserHwid = (userId: string) => {
+    setUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        const updatedLicenses = u.licenses.map(l => ({ ...l, hwid: null, lastHwidReset: new Date().toISOString().split('T')[0] }));
+        return { ...u, licenses: updatedLicenses };
+      }
+      return u;
+    }));
+  };
+
+  const adminDeleteUser = (userId: string) => {
+    setUsers(prev => prev.filter(u => u.id !== userId));
+  };
+
+  const adminClearAllUsers = () => {
+    setUsers([]);
+    localStorage.removeItem('dexum_email_codes');
+    localStorage.removeItem('dexum_reset_codes');
+    localStorage.setItem('dexum_store_users', JSON.stringify([]));
+    setCurrentUserId('');
+  };
+
+  const updateMinecraftNick = (nick: string) => {
+    if (!currentUser) return;
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, minecraftNick: nick } : u));
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-      <div 
-        id="auth-modal-container"
-        className="relative w-full max-w-md bg-[#101014] border border-white/10 rounded-2xl shadow-2xl p-6 sm:p-7 overflow-hidden text-left"
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Header */}
-        <div className="text-center mb-5">
-          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white mx-auto mb-2.5">
-            {activeTab === 'forgot_password' ? (
-              <KeyRound className="w-5 h-5" />
-            ) : needs2FA ? (
-              <Smartphone className="w-5 h-5 text-amber-400" />
-            ) : (
-              <Gamepad2 className="w-5 h-5" />
-            )}
-          </div>
-
-          <h3 className="text-xl font-bold text-white">
-            {activeTab === 'forgot_password'
-              ? 'Восстановление доступа'
-              : needs2FA
-              ? 'Двухфакторная защита (2FA)'
-              : activeTab === 'login'
-              ? 'Вход в аккаунт Dexum'
-              : 'Создать аккаунт'}
-          </h3>
-
-          <p className="text-xs text-zinc-400 mt-0.5">
-            {activeTab === 'forgot_password'
-              ? 'Сброс пароля с подтверждением через защищенный код на Email'
-              : needs2FA
-              ? 'Введите 6-значный одноразовый код из приложения Google Authenticator'
-              : activeTab === 'login'
-              ? 'Управление вашими лицензиями, HWID и лаунчером 1.21'
-              : 'Регистрация дает мгновенный доступ к клиенту и CFG'}
-          </p>
-        </div>
-
-        {/* Tab Switcher (Visible in normal modes) */}
-        {activeTab !== 'forgot_password' && !needs2FA && (
-          <div className="grid grid-cols-2 p-1 rounded-xl bg-[#0b0b0e] border border-white/5 mb-4">
-            <button
-              type="button"
-              onClick={() => handleTabChange('login')}
-              className={`py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                activeTab === 'login'
-                  ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Вход
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('register')}
-              className={`py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                activeTab === 'register'
-                  ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Регистрация
-            </button>
-          </div>
-        )}
-
-        {/* Alert Notifications */}
-        {errorMsg && (
-          <div className="mb-3.5 p-2.5 bg-rose-950/80 border border-rose-500/40 rounded-xl text-xs text-rose-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="mb-3.5 p-2.5 bg-emerald-950/80 border border-emerald-500/40 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* Demo Code Helper Box */}
-        {demoHintCode && (
-          <div className="mb-3.5 p-2.5 bg-amber-950/40 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 flex items-center justify-between">
-            <span>Одноразовый код на почту (Демо):</span>
-            <span className="font-mono font-bold text-sm bg-black/40 px-2 py-0.5 rounded border border-amber-500/30">
-              {demoHintCode}
-            </span>
-          </div>
-        )}
-
-        {/* --- 1. FORGOT PASSWORD VIEW --- */}
-        {activeTab === 'forgot_password' && (
-          <div className="space-y-3.5">
-            {resetStep === 'request' ? (
-              <form onSubmit={handleRequestReset} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    Ваш Email адрес:
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-zinc-500 absolute left-3 top-2.5" />
-                    <input
-                      type="email"
-                      required
-                      placeholder="user@example.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Отправка...' : 'Отправить код сброса'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleConfirmReset} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    6-значный код подтверждения из письма:
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    placeholder="123456"
-                    value={resetCode}
-                    onChange={e => setResetCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-center text-sm font-mono tracking-widest text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    Новый пароль:
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="Минимум 6 символов"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Сохранение...' : 'Установить новый пароль'}
-                </button>
-              </form>
-            )}
-
-            <button
-              type="button"
-              onClick={() => handleTabChange('login')}
-              className="w-full text-center text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer pt-1"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Вернуться ко входу
-            </button>
-          </div>
-        )}
-
-        {/* --- 2. 2FA CODE ENTRY (GOOGLE AUTHENTICATOR) --- */}
-        {activeTab === 'login' && needs2FA && (
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Код Google Authenticator:
-              </label>
-              <input
-                type="text"
-                autoFocus
-                required
-                maxLength={6}
-                placeholder="000 000"
-                value={totpCode}
-                onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full px-3 py-2.5 bg-[#141418] border border-amber-500/30 rounded-xl text-center text-base font-mono tracking-widest text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting || totpCode.length < 6}
-              className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              {isSubmitting ? 'Проверка...' : 'Подтвердить вход'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setNeeds2FA(false)}
-              className="w-full text-center text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer pt-1"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Отмена
-            </button>
-          </form>
-        )}
-
-        {/* --- 3. STANDARD LOGIN / REGISTER FORM --- */}
-        {activeTab !== 'forgot_password' && !needs2FA && (
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {activeTab === 'register' && (
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                  Логин:
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ваш логин"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Email адрес:
-              </label>
-              <input
-                type="email"
-                required
-                placeholder="user@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-zinc-300">
-                  Пароль:
-                </label>
-                {activeTab === 'login' && (
-                  <button
-                    type="button"
-                    onClick={() => handleTabChange('forgot_password')}
-                    className="text-[11px] text-zinc-400 hover:text-white underline cursor-pointer"
-                  >
-                    Забыли пароль?
-                  </button>
-                )}
-              </div>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-[#141418] border border-white/10 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-md shadow-white/5 transition-colors cursor-pointer disabled:opacity-50 mt-1"
-            >
-              {isSubmitting
-                ? 'Обработка...'
-                : activeTab === 'login'
-                ? 'Войти в личный кабинет'
-                : 'Зарегистрироваться'}
-            </button>
-          </form>
-        )}
-
-        {/* Quick Demo Switcher */}
-        {!needs2FA && activeTab !== 'forgot_password' && (
-          <div className="mt-5 pt-3.5 border-t border-white/5">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block text-center mb-2">
-              Быстрый тестовый вход (1 клик):
-            </span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {users.map(u => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => handleQuickLogin(u.id)}
-                  className="p-1.5 px-2 rounded-lg bg-[#0b0b0e] border border-white/5 hover:border-white/15 text-left text-xs transition-colors cursor-pointer"
-                >
-                  <div className="font-semibold text-white truncate text-[11px]">{u.name.split(' ')[0]}</div>
-                  <div className="text-[9px] text-zinc-400 font-mono">
-                    {u.role === 'admin' ? '👑 Admin' : u.licenses.length > 0 ? '💎 Lifetime' : '🎮 User'}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-      </div>
-    </div>
+    <AuthContext.Provider
+      value={{
+        currentUser,
+        users,
+        orders,
+        products: PRODUCTS,
+        login,
+        register,
+        logout,
+        purchaseProduct,
+        resetHwid,
+        activateKey,
+        adminGenerateKey,
+        adminToggleBan,
+        adminResetUserHwid,
+        adminDeleteUser,
+        adminClearAllUsers,
+        updateMinecraftNick,
+        requestPasswordReset,
+        confirmPasswordReset,
+        confirmEmailVerification,
+        setup2FA,
+        enable2FA,
+        disable2FA
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

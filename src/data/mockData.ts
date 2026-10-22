@@ -11,8 +11,8 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: 'Навсегда (Lifetime)',
     popular: true,
     featured: true,
-    supportedVersions: ['1.21'],
-    supportedServers: ['Fabric 1.21.x'],
+    supportedVersions: ['26.2']
+    supportedServers: ['Fabric 26.2'],
     features: [
       'Все 28 модулей: Combat, Movement, Render, Player, World',
       'Бессрочный доступ и все будущие обновления',
@@ -25,7 +25,7 @@ export const PRODUCTS: SoftwareProduct[] = [
     ],
     badge: 'ХИТ',
     downloadSize: '—',
-    version: 'Fabric 1.21.x'
+    version: 'Fabric 26.2'
   },
   {
     id: 'dexum-90-days',
@@ -37,8 +37,8 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: '3 Месяца (90 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['1.21'],
-    supportedServers: ['Fabric 1.21.x'],
+    supportedVersions: ['26.2
+    supportedServers: ['Fabric 26.2'],
     features: [
       'Все 28 модулей клиента',
       'ClickGui и все HUD-элементы',
@@ -48,7 +48,7 @@ export const PRODUCTS: SoftwareProduct[] = [
     ],
     badge: 'ВЫГОДНО',
     downloadSize: '—',
-    version: 'Fabric 1.21.x'
+    version: 'Fabric 26.2'
   },
   {
     id: 'dexum-30-days',
@@ -59,8 +59,8 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: '1 Месяц (30 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['1.21'],
-    supportedServers: ['Fabric 1.21.x'],
+    supportedVersions: ['26.2
+    supportedServers: ['Fabric 26.2'],
     features: [
       'Все 28 модулей клиента',
       'ClickGui и базовые HUD-элементы',
@@ -68,7 +68,7 @@ export const PRODUCTS: SoftwareProduct[] = [
       'Обновления в течение срока'
     ],
     downloadSize: '—',
-    version: 'Fabric 1.21.x'
+    version: 'Fabric 26.2'
   }
 ];
 
@@ -345,105 +345,18 @@ export const CLOUD_CONFIGS: CloudConfig[] = [
   }
 ];
 
-export const INITIAL_USERS: User[] = [
-  {
-    id: 'usr-admin',
-    name: 'Alex Morozov (Admin)',
-    email: 'admin@dexum.gg',
-    role: 'admin',
-    password: 'adminpassword123',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    minecraftNick: 'DexumOwner',
-    hwid: 'HWID-9F8A-22B1-8C09-E81D-DEXUM',
-    registeredAt: '2025-01-10',
-    balance: 15400,
-    isEmailVerified: true,
-    totpEnabled: false,
-    licenses: [
-      {
-        id: 'lic-admin-1',
-        productId: 'dexum-lifetime',
-        productName: 'Dexum Client Lifetime',
-        key: 'DXM-LIFE-ADMIN-9999-DEV',
-        status: 'active',
-        expiresAt: 'Lifetime',
-        daysRemaining: 'unlimited',
-        hwid: 'HWID-9F8A-22B1-8C09-E81D-DEXUM',
-        hwidResetAvailable: true,
-        lastHwidReset: null,
-        activatedAt: '2025-01-10'
-      }
-    ]
-  },
-  {
-    id: 'usr-buyer',
-    name: 'xX_ShadowPvP_Xx',
-    email: 'shadow.pvp@gmail.com',
-    role: 'buyer',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
-    minecraftNick: 'Shadow_Demon77',
-    hwid: 'HWID-41C8-99D0-55A1-18F2-CLIENT',
-    registeredAt: '2026-02-14',
-    balance: 500,
-    isEmailVerified: true,
-    totpEnabled: false,
-    licenses: [
-      {
-        id: 'lic-buyer-1',
-        productId: 'dexum-lifetime',
-        productName: 'Dexum Client Lifetime',
-        key: 'DXM-LIFE-8821-9940-PVPGOD',
-        status: 'active',
-        expiresAt: 'Lifetime',
-        daysRemaining: 'unlimited',
-        hwid: 'HWID-41C8-99D0-55A1-18F2-CLIENT',
-        hwidResetAvailable: true,
-        lastHwidReset: '2026-02-15',
-        activatedAt: '2026-02-14'
-      }
-    ]
-  },
-  {
-    id: 'usr-new',
-    name: 'Steve_Crafter',
-    email: 'steve@mine.ru',
-    role: 'user',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    minecraftNick: 'StevePvP2026',
-    hwid: null,
-    registeredAt: '2026-03-01',
-    balance: 0,
-    isEmailVerified: false,
-    totpEnabled: false,
-    licenses: []
-  }
-];
-
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-901',
-    userId: 'usr-buyer',
-    userName: 'xX_ShadowPvP_Xx',
-    productId: 'dexum-lifetime',
-    productName: 'Dexum Client Lifetime',
-    amount: 1990,
-    paymentMethod: 'funpay',
-    status: 'completed',
-    date: '2026-02-14 18:42',
-    licenseKey: 'DXM-LIFE-8821-9940-PVPGOD'
-  }
-];
+// Очищено: больше нет фейковых аккаунтов и админов в коде
+export const INITIAL_USERS: User[] = [];
+export const INITIAL_ORDERS: Order[] = [];
 
 export const FAQ_ITEMS = [
   {
     question: 'Какие версии Minecraft поддерживаются?',
-    answer: 'Клиент работает на Fabric Loader для Minecraft 1.21.x. NeoForge и другие лоадеры не поддерживаются.'
+    answer: 'Клиент работает на Fabric Loader для Minecraft 26.2. NeoForge и другие лоадеры не поддерживаются.'
   },
   {
     question: 'Как установить клиент?',
-    answer: 'Установите Fabric Loader для 1.21.x, скачайте jar-файл клиента из личного кабинета и положите его в папку mods. При первом запуске клиент создаст папку dexum/ в директории игры.'
+    answer: 'Установите Fabric Loader для 26.2, скачайте jar-файл клиента из личного кабинета и положите его в папку mods. При первом запуске клиент создаст папку dexum/ в директории игры.'
   },
   {
     question: 'Что умеет клиент?',

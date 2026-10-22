@@ -29,16 +29,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
         
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#141418] border border-white/10 text-zinc-300 text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-zinc-400 animate-pulse" />
-          DEXUM CLIENT • FABRIC 1.21.x
+          DEXUM CLIENT • FABRIC 26.2
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-          Приватный мод Dexum для Minecraft 1.21
+          Приватный мод Dexum для Minecraft 26.2
         </h1>
 
         <p className="text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
           Aura, TriggerBot, AimAssist, NoSlow, NoFall, ClickGui с drag &amp; drop панелями,
-          система конфигов и команд, Friend-система с ESP и HUD. Fabric 1.21.x.
+          система конфигов и команд, Friend-система с ESP и HUD. Fabric 26.2.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -85,7 +85,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
           {[
-            { name: 'Minecraft 1.21.x', status: 'Поддерживается', sub: 'Fabric Loader' },
+            { name: 'Minecraft 26.2', status: 'Поддерживается', sub: 'Fabric Loader' },
             { name: 'Vanilla Servers', status: 'Совместимо', sub: 'Любые сервера' },
             { name: 'Fabric Servers', status: 'Совместимо', sub: 'С модами' },
             { name: 'Windows 10 / 11', status: 'Поддерживается', sub: 'x64' }

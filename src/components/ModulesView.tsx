@@ -180,7 +180,7 @@ export const ModulesView: React.FC<ModulesViewProps> = ({ onOpenBuyModal }) => {
           Готовы попробовать?
         </h3>
         <p className="text-xs text-zinc-400 max-w-md mx-auto">
-          Получите ключ, скачайте jar и установите в папку mods Fabric 1.21.x.
+          Получите ключ, скачайте jar и установите в папку mods Fabric 26.2.
         </p>
         <button
           onClick={() => onOpenBuyModal('dexum-lifetime')}

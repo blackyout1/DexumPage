@@ -182,7 +182,7 @@ export const PaymentCheckoutModal: React.FC<PaymentCheckoutModalProps> = ({
                 Лицензия готова к использованию!
               </h3>
               <p className="text-xs text-zinc-400 mt-1">
-                Лицензия на <strong>{product.name}</strong> зарегистрирована в базе Dexum 1.21.
+                Лицензия на <strong>{product.name}</strong> зарегистрирована в базе Dexum 26.2.
               </p>
             </div>
 

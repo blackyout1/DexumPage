@@ -101,7 +101,7 @@ function AppContent() {
                 <span className="font-bold text-base tracking-wider text-white">DEXUM CLIENT</span>
               </div>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Приватный мод для Minecraft 1.21.x на Fabric Loader. 28 модулей, ClickGui, система конфигов и команд.
+                Приватный мод для Minecraft 26.2 на Fabric Loader. 28 модулей, ClickGui, система конфигов и команд.
               </p>
             </div>
 
@@ -134,7 +134,7 @@ function AppContent() {
             <div className="space-y-2">
               <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Совместимость</h4>
               <div className="flex flex-wrap gap-1 text-[10px] font-mono text-zinc-300">
-                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Minecraft 1.21.x</span>
+                <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Minecraft 26.2</span>
                 <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Fabric Loader</span>
                 <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Vanilla Servers</span>
                 <span className="px-2 py-0.5 rounded bg-[#141418] border border-white/5">Windows 10 / 11</span>

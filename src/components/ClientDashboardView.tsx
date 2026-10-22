@@ -400,7 +400,7 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <Download className="w-4 h-4 text-zinc-300" />
-                Загрузка лаунчера & клиента (1.21)
+                Загрузка лаунчера & клиента (26.2)
               </h2>
               <p className="text-xs text-zinc-400 mt-0.5">
                 Автономный лаунчер сам установит Fabric / NeoForge и настроит оптимальные JVM-аргументы.
@@ -425,12 +425,12 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({
 
               <div className="p-3.5 rounded-xl bg-[#0b0b0e] border border-white/5 flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-white">Dexum-Fabric-1.21.jar</div>
+                  <div className="text-xs font-bold text-white">Dexum-Fabric-26.2.jar</div>
                   <div className="text-[10px] text-zinc-400 font-mono">Мод для Fabric Loader • 24.1 MB</div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleDownloadLauncher('Dexum-Fabric-1.21.jar')}
+                  onClick={() => handleDownloadLauncher('Dexum-Fabric-26.2.jar')}
                   className="px-3 py-1.5 rounded-lg bg-[#18181c] hover:bg-[#24242a] border border-white/10 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
                 >
                   <Download className="w-3.5 h-3.5" />
