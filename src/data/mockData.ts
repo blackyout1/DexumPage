@@ -37,7 +37,7 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: '3 Месяца (90 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['26.2
+    supportedVersions: ['26.2'],
     supportedServers: ['Fabric 26.2'],
     features: [
       'Все 28 модулей клиента',
@@ -59,7 +59,7 @@ export const PRODUCTS: SoftwareProduct[] = [
     durationLabel: '1 Месяц (30 дней)',
     popular: false,
     featured: false,
-    supportedVersions: ['26.2
+    supportedVersions: ['26.2'],
     supportedServers: ['Fabric 26.2'],
     features: [
       'Все 28 модулей клиента',
@@ -345,7 +345,6 @@ export const CLOUD_CONFIGS: CloudConfig[] = [
   }
 ];
 
-// Очищено: больше нет фейковых аккаунтов и админов в коде
 export const INITIAL_USERS: User[] = [];
 export const INITIAL_ORDERS: Order[] = [];
 
