@@ -1,5 +1,8 @@
 import QRCode from 'qrcode';
 
+// ⚠️ ВСТАВЬ СВОЙ EMAIL СЮДА ⚠️
+const ADMIN_EMAIL = 'vlad2007krasavshik@gmail.com';
+
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 function generateBase32Secret(length = 20): string {
@@ -53,10 +56,7 @@ async function verifyTOTPToken(token: string, secret: string): Promise<boolean> 
   return false;
 }
 
-// ============================================================
-// ПАРОЛИ: PBKDF2-SHA256, 100 000 итераций, 256-битный хеш
-// ============================================================
-
+// --- ХЕШИРОВАНИЕ ПАРОЛЯ ---
 function generateSalt(): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(16));
 }
@@ -89,8 +89,6 @@ async function hashPassword(password: string, salt: Uint8Array): Promise<string>
   return Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ============================================================
-
 interface WorkerUser {
   id: string;
   name: string;
@@ -115,40 +113,8 @@ const resetTokens = new Map<string, { code: string; userId: string; expiresAt: n
 const verifyTokens = new Map<string, { code: string; expiresAt: number }>();
 const licenses = new Map<string, any>();
 
-async function initDefaultUsers() {
-  if (users.size > 0) return;
-
-  // ⚠️ ВСТАВЬ СВОЙ EMAIL И ПАРОЛЬ ⚠️
-  const myEmail = 'vlad2007krasavshik@gmail.com';
-  const myPassword = 'Vladik20121984Vladik';
-  const mySalt = generateSalt();
-  const adminHash = await hashPassword(myPassword, mySalt);
-
-  users.set('usr-admin', {
-    id: 'usr-admin',
-    name: 'Dexum Owner',
-    email: myEmail,
-    passwordHash: adminHash,
-    salt: saltToHex(mySalt),
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    minecraftNick: 'Owner',
-    hwid: 'HWID-ADMIN-DEXUM',
-    registeredAt: '2025-01-10',
-    balance: 999999,
-    isBanned: false,
-    isEmailVerified: true,
-    totpEnabled: false
-  });
-  emailToId.set(myEmail, 'usr-admin');
-
-  licenses.set('DXM-LIFE-8821-9940-PVPGOD', {
-    key: 'DXM-LIFE-8821-9940-PVPGOD',
-    user: 'Dexum Owner',
-    status: 'active',
-    hwid: 'HWID-ADMIN-DEXUM'
-  });
-}
+// База пустая, никаких фейковых админов. Ты сам зарегаешься.
+function initDefaultUsers() {}
 
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -164,7 +130,7 @@ function jsonResponse(data: any, status = 200) {
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    await initDefaultUsers();
+    initDefaultUsers();
 
     const url = new URL(request.url);
     const { pathname } = url;
@@ -187,32 +153,32 @@ export default {
         const passwordHash = await hashPassword(password, salt);
         const randomHex = Math.random().toString(36).substring(2, 7).toUpperCase();
 
+        // ⚠️ АВТО-ВЫДАЧА АДМИНКИ ⚠️
+        const isAdmin = cleanEmail === ADMIN_EMAIL;
+
         const newUser: WorkerUser = {
           id: userId,
           name: String(name).trim(),
           email: cleanEmail,
           passwordHash,
           salt: saltToHex(salt),
-          role: 'user',
+          role: isAdmin ? 'admin' : 'user', 
           avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`,
           minecraftNick: minecraftNick || `${name}_PvP`,
           hwid: `HWID-${randomHex}-DXM`,
           registeredAt: new Date().toISOString().split('T')[0],
-          balance: 0,
+          balance: isAdmin ? 999999 : 0,
           isBanned: false,
-          isEmailVerified: false,
+          isEmailVerified: true,
           totpEnabled: false
         };
 
         users.set(userId, newUser);
         emailToId.set(cleanEmail, userId);
 
-        const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-        verifyTokens.set(userId, { code: verifyCode, expiresAt: Date.now() + 15 * 60 * 1000 });
-
-        // Не отдаем salt и passwordHash
+        // Не отдаем пароли
         const { passwordHash: _, salt: __, totpSecret: ___, ...safeUser } = newUser;
-        return jsonResponse({ success: true, message: 'Успешно!', user: safeUser, demoVerificationCode: verifyCode }, 201);
+        return jsonResponse({ success: true, message: isAdmin ? 'Аккаунт создан! Вы - Админ.' : 'Успешно!', user: safeUser }, 201);
       } catch (e: any) {
         return jsonResponse({ success: false, message: e.message }, 500);
       }
@@ -228,8 +194,6 @@ export default {
         if (!userId || !users.has(userId)) return jsonResponse({ success: false, message: 'Неверный Email или пароль' }, 401);
 
         const user = users.get(userId)!;
-
-        // Восстанавливаем соль юзера и считаем хеш от введенного пароля
         const saltBytes = hexToSalt(user.salt);
         const incomingHash = await hashPassword(password || '', saltBytes);
 
@@ -277,7 +241,6 @@ export default {
         const user = users.get(session.userId);
         if (!user) return jsonResponse({ success: false, message: 'Пользователь не найден' }, 404);
 
-        // НОВАЯ СОЛЬ при смене пароля
         const newSalt = generateSalt();
         user.passwordHash = await hashPassword(String(newPassword), newSalt);
         user.salt = saltToHex(newSalt);
